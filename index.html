@@ -84,6 +84,19 @@
   .stat-card{background:#fff; border-radius:18px; padding:14px; box-shadow:0 4px 16px rgba(15,40,80,.08);}
   .stat-card .label{font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.03em;}
   .stat-card .value{font-size:19px; font-weight:800; margin-top:4px;}
+  .stat-card .sub-trend{font-size:11px; font-weight:700; margin-top:3px;}
+  .sub-trend.up{color:#dc2626;}
+  .sub-trend.down{color:#16a34a;}
+  .sub-trend.flat{color:var(--muted);}
+
+  .reminder-card{
+    border-radius:18px; padding:14px 16px; margin-bottom:16px; display:flex; align-items:center; gap:12px;
+  }
+  .reminder-card.due{background:#fff4e0;}
+  .reminder-card.ok{background:#eaf7ef;}
+  .reminder-icon{font-size:22px; flex:0 0 auto;}
+  .reminder-text{font-size:13px; font-weight:700; line-height:1.4;}
+  .reminder-text .sub{font-weight:600; color:var(--muted); font-size:12px; display:block; margin-top:1px;}
 
   .empty{text-align:center; color:var(--muted); padding:26px 10px; font-size:13px;}
   .empty .big{font-size:30px; margin-bottom:6px;}
@@ -156,9 +169,21 @@
       <div class="bars" id="bars"></div>
     </div>
 
+    <div id="reminderCard"></div>
+
     <div class="stat-grid">
-      <div class="stat-card"><div class="label">Avg km/L</div><div class="value" id="statKml">–</div></div>
+      <div class="stat-card">
+        <div class="label">Avg km/L</div>
+        <div class="value" id="statKml">–</div>
+        <div class="sub-trend" id="statKmlTrend"></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Cost / km</div>
+        <div class="value" id="statCostKm">–</div>
+        <div class="sub-trend" id="statCostKmTrend"></div>
+      </div>
       <div class="stat-card"><div class="label">Avg Price/L</div><div class="value" id="statAvgPrice">–</div></div>
+      <div class="stat-card"><div class="label">Total Spent</div><div class="value" id="statTotalSpent">₱0</div></div>
     </div>
 
     <div class="section-title">Spending by Station</div>
@@ -203,7 +228,7 @@
 
     <div class="checkbox-row">
       <input type="checkbox" id="f_full" checked>
-      <label for="f_full">Full tank</label>
+      <label for="f_full">Full tank (uncheck if you only partially filled)</label>
     </div>
 
     <button class="btn btn-primary" onclick="saveEntry()">Save Fill-up</button>
@@ -271,6 +296,8 @@ function getActiveEntries(){
 }
 
 function entryDistance(e){
+  // Raw distance traveled for this entry's interval (regardless of full/partial).
+  // Used for cost/km and cadence — actual km driven is actual km driven either way.
   if(e.distMode === 'dist') return e.distance;
   const entries = getActiveEntries().filter(x=>x.distMode==='odo');
   const idx = entries.findIndex(x=>x.id===e.id);
@@ -278,6 +305,33 @@ function entryDistance(e){
   const prev = entries[idx-1];
   if(prev.odo == null || e.odo == null) return null;
   return e.odo - prev.odo;
+}
+
+// km/L is only meaningful full-tank to full-tank: partial fills don't tell you
+// how much fuel was actually burned, only liters added. So we accumulate liters
+// and distance across partial fills and only resolve a km/L figure once we hit
+// the next full tank, attributing it back to that closing entry.
+function computeFullTankSegments(entries){
+  const kmlByEntryId = {};
+  const segments = []; // {entryId, date, kml}
+  let litersAcc = 0, distAcc = 0, distKnown = true;
+
+  entries.forEach(e=>{
+    const d = entryDistance(e);
+    if(d == null) distKnown = false; else distAcc += d;
+    litersAcc += e.liters;
+
+    if(e.fullTank){
+      if(distKnown && distAcc > 0 && litersAcc > 0){
+        const kml = distAcc / litersAcc;
+        kmlByEntryId[e.id] = kml;
+        segments.push({entryId: e.id, date: e.date, kml});
+      }
+      litersAcc = 0; distAcc = 0; distKnown = true;
+    }
+  });
+
+  return { kmlByEntryId, segments };
 }
 
 function stationColor(name){
@@ -298,8 +352,52 @@ function monthLabel(key){
   return new Date(y, m-1, 1).toLocaleDateString('en-US',{month:'short'});
 }
 
+function trendArrow(curr, prev, lowerIsBetter){
+  if(curr == null || prev == null || prev === 0) return {cls:'flat', text:''};
+  const change = ((curr - prev) / prev) * 100;
+  if(Math.abs(change) < 2) return {cls:'flat', text:'Flat vs. previous'};
+  const better = lowerIsBetter ? change < 0 : change > 0;
+  const arrow = change > 0 ? '↑' : '↓';
+  return { cls: better ? 'down' : 'up', text: `${arrow} ${Math.abs(change).toFixed(0)}% vs. previous` };
+}
+
+function renderReminder(entries){
+  const card = document.getElementById('reminderCard');
+  if(entries.length < 2){ card.innerHTML = ''; return; }
+
+  const dates = entries.map(e=> new Date(e.date+'T00:00:00').getTime());
+  const gaps = [];
+  for(let i=1;i<dates.length;i++) gaps.push((dates[i]-dates[i-1]) / 86400000);
+  const avgGap = gaps.reduce((a,b)=>a+b,0) / gaps.length;
+
+  const lastDate = dates[dates.length-1];
+  const daysSince = Math.round((Date.now() - lastDate) / 86400000);
+  const isDue = daysSince >= avgGap;
+
+  if(avgGap < 1){ card.innerHTML = ''; return; }
+
+  if(isDue){
+    const overdue = Math.round(daysSince - avgGap);
+    card.innerHTML = `<div class="reminder-card due">
+      <div class="reminder-icon">⏰</div>
+      <div class="reminder-text">It's been ${daysSince} days since your last fill-up
+        <span class="sub">You usually fill up every ~${Math.round(avgGap)} days — might be time soon${overdue>0?` (about ${overdue}d overdue)`:''}</span>
+      </div>
+    </div>`;
+  } else {
+    card.innerHTML = `<div class="reminder-card ok">
+      <div class="reminder-icon">✅</div>
+      <div class="reminder-text">${daysSince} days since your last fill-up
+        <span class="sub">You usually go ~${Math.round(avgGap)} days between fill-ups — you're good</span>
+      </div>
+    </div>`;
+  }
+}
+
 function renderAll(){
   const entries = getActiveEntries();
+
+  renderReminder(entries);
 
   // group by month
   const monthMap = {};
@@ -333,21 +431,58 @@ function renderAll(){
   }
 
   // overall stats (all-time, not range-limited)
-  let totalLiters=0, totalDist=0, allSpent=0;
+  let totalLiters=0, totalDistAll=0, allSpent=0;
   const stationMap = {};
   entries.forEach(e=>{
     totalLiters += e.liters;
     allSpent += e.total;
-    const dist = entryDistance(e);
-    if(dist && dist>0 && e.liters>0) totalDist += dist;
+    const d = entryDistance(e);
+    if(d && d>0) totalDistAll += d; // raw distance, used for cost/km — accurate regardless of partial fills
     const st = (e.station||'Unspecified').trim() || 'Unspecified';
     if(!stationMap[st]) stationMap[st] = {total:0, liters:0, count:0};
     stationMap[st].total += e.total;
     stationMap[st].liters += e.liters;
     stationMap[st].count++;
   });
-  document.getElementById('statKml').textContent = (totalDist>0 && totalLiters>0) ? (totalDist/totalLiters).toFixed(1)+' km/L' : '–';
+
+  // km/L: full-tank-to-full-tank only, since partial fills can't isolate true consumption
+  const { kmlByEntryId, segments } = computeFullTankSegments(entries);
+  const avgKml = segments.length ? segments.reduce((s,seg)=>s+seg.kml,0)/segments.length : null;
+  document.getElementById('statKml').textContent = avgKml ? avgKml.toFixed(1)+' km/L' : '–';
+
+  // trend: most recent segment vs the average of the rest
+  if(segments.length >= 2){
+    const latest = segments[segments.length-1].kml;
+    const priorAvg = segments.slice(0,-1).reduce((s,seg)=>s+seg.kml,0) / (segments.length-1);
+    const t = trendArrow(latest, priorAvg, false);
+    document.getElementById('statKmlTrend').textContent = t.text;
+    document.getElementById('statKmlTrend').className = 'sub-trend ' + t.cls;
+  } else {
+    document.getElementById('statKmlTrend').textContent = segments.length===1 ? 'Need 2+ full tanks for a trend' : '';
+    document.getElementById('statKmlTrend').className = 'sub-trend flat';
+  }
+
+  // cost per km — total spend / total distance actually driven (works fine even with partial fills)
+  const costPerKm = totalDistAll>0 ? (allSpent/totalDistAll) : null;
+  document.getElementById('statCostKm').textContent = costPerKm ? '₱'+costPerKm.toFixed(2) : '–';
+
+  // cost/km trend: last 3 fill-ups vs the 3 before that
+  const withDist = entries.map(e=>({...e, d: entryDistance(e)})).filter(e=>e.d && e.d>0);
+  if(withDist.length >= 4){
+    const recent = withDist.slice(-3);
+    const prior = withDist.slice(-6, -3);
+    const ratio = arr => arr.reduce((s,e)=>s+e.total,0) / arr.reduce((s,e)=>s+e.d,0);
+    if(prior.length){
+      const t = trendArrow(ratio(recent), ratio(prior), true);
+      document.getElementById('statCostKmTrend').textContent = t.text;
+      document.getElementById('statCostKmTrend').className = 'sub-trend ' + t.cls;
+    }
+  } else {
+    document.getElementById('statCostKmTrend').textContent = '';
+  }
+
   document.getElementById('statAvgPrice').textContent = totalLiters>0 ? '₱'+(allSpent/totalLiters).toFixed(2) : '–';
+  document.getElementById('statTotalSpent').textContent = '₱' + allSpent.toLocaleString(undefined,{maximumFractionDigits:0});
 
   const stationList = document.getElementById('stationList');
   const stations = Object.entries(stationMap).sort((a,b)=> b[1].total - a[1].total);
@@ -366,10 +501,11 @@ function renderAll(){
     `).join('');
   }
 
-  renderHistory();
+  renderHistory(kmlByEntryId);
 }
 
-function renderHistory(){
+function renderHistory(kmlByEntryId){
+  kmlByEntryId = kmlByEntryId || computeFullTankSegments(getActiveEntries()).kmlByEntryId;
   const entries = getActiveEntries().slice().reverse();
   const list = document.getElementById('entryList');
   if(entries.length === 0){
@@ -377,17 +513,18 @@ function renderHistory(){
     return;
   }
   list.innerHTML = entries.map(e=>{
-    const dist = entryDistance(e);
-    const kml = (dist && dist>0 && e.liters>0) ? (dist/e.liters).toFixed(1)+' km/L' : '';
+    const kml = kmlByEntryId[e.id];
+    const kmlText = kml ? kml.toFixed(1)+' km/L' : '';
     const st = e.station || 'Fill-up';
+    const partialTag = e.fullTank ? '' : ' · Partial fill';
     return `
     <div class="list-row" onclick="openEntrySheet('${e.id}')" style="cursor:pointer;">
       <div class="avatar" style="background:${stationColor(st)};">${st.slice(0,2).toUpperCase()}</div>
       <div class="list-main">
         <div class="list-title">${escapeHtml(st)}</div>
-        <div class="list-sub">${formatDate(e.date)} · ${e.liters}L @ ₱${e.price}/L</div>
+        <div class="list-sub">${formatDate(e.date)} · ${e.liters}L @ ₱${e.price}/L${partialTag}</div>
       </div>
-      <div class="list-amt">₱${e.total.toLocaleString(undefined,{maximumFractionDigits:0})}${kml?`<span class="kml">${kml}</span>`:''}</div>
+      <div class="list-amt">₱${e.total.toLocaleString(undefined,{maximumFractionDigits:0})}${kmlText?`<span class="kml">${kmlText}</span>`:''}</div>
     </div>`;
   }).join('');
 }
