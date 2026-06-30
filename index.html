@@ -133,7 +133,10 @@
     <button class="circle-btn" onclick="openVehicleSheet()">＋</button>
   </div>
 
-  <div class="vehicle-scroll" id="vehicleRow"></div>
+  <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+    <div class="vehicle-scroll" id="vehicleRow" style="margin-bottom:0; flex:1;"></div>
+    <button class="circle-btn" style="width:36px; height:36px; font-size:14px; flex:0 0 auto;" onclick="openVehicleSheet(true)">✎</button>
+  </div>
 
   <div class="tabbar">
     <div class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">Analytics</div>
@@ -195,7 +198,7 @@
       <div class="field"><label>Price / Liter (₱)</label><input type="number" id="f_price" inputmode="decimal" placeholder="e.g. 74.20"></div>
     </div>
 
-    <div class="field"><label>Total Cost (₱) — auto-filled, editable</label><input type="number" id="f_total" inputmode="decimal" placeholder="0.00"></div>
+    <div class="field"><label>Total Cost (₱) — enter this if you didn't catch the price/L</label><input type="number" id="f_total" inputmode="decimal" placeholder="0.00"></div>
     <div class="field"><label>Station (optional)</label><input type="text" id="f_station" placeholder="e.g. Petron, Shell, Caltex"></div>
 
     <div class="checkbox-row">
@@ -209,14 +212,15 @@
   </div>
 </div>
 
-<!-- Add Vehicle Sheet -->
+<!-- Add/Rename Vehicle Sheet -->
 <div class="sheet-overlay" id="vehicleOverlay">
   <div class="sheet">
     <div class="sheet-close"></div>
-    <h3>Add Vehicle</h3>
+    <h3 id="vehicleSheetTitle">Add Vehicle</h3>
     <div class="field"><label>Vehicle Name</label><input type="text" id="v_name" placeholder="e.g. Vios, Click 125i, Hilux"></div>
-    <button class="btn btn-primary" onclick="saveVehicle()">Add Vehicle</button>
+    <button class="btn btn-primary" id="vehicleSaveBtn" onclick="saveVehicle()">Add Vehicle</button>
     <button class="btn btn-secondary" onclick="closeVehicleSheet()">Cancel</button>
+    <button class="btn btn-danger" id="vehicleDeleteBtn" style="display:none;" onclick="deleteVehicle()">Delete Vehicle</button>
   </div>
 </div>
 
@@ -448,12 +452,40 @@ function attachAutoCalc(){
   const liters = document.getElementById('f_liters');
   const price = document.getElementById('f_price');
   const total = document.getElementById('f_total');
-  function recalc(){
-    const l = parseFloat(liters.value), p = parseFloat(price.value);
-    if(!isNaN(l) && !isNaN(p)) total.value = (l*p).toFixed(2);
+  let lastEdited = null;
+
+  liters.addEventListener('input', ()=>{
+    recalc('liters');
+  });
+  price.addEventListener('input', ()=>{
+    lastEdited = 'price';
+    recalc('price');
+  });
+  total.addEventListener('input', ()=>{
+    lastEdited = 'total';
+    recalc('total');
+  });
+
+  function recalc(changed){
+    const l = parseFloat(liters.value);
+    const p = parseFloat(price.value);
+    const t = parseFloat(total.value);
+
+    if(changed === 'liters'){
+      // prefer recomputing whichever of price/total was NOT the most recently hand-typed one
+      if(lastEdited === 'total' && !isNaN(l) && !isNaN(t) && l>0){
+        price.value = (t/l).toFixed(2);
+      } else if(!isNaN(l) && !isNaN(p)){
+        total.value = (l*p).toFixed(2);
+      } else if(!isNaN(l) && !isNaN(t) && l>0){
+        price.value = (t/l).toFixed(2);
+      }
+    } else if(changed === 'price'){
+      if(!isNaN(l) && !isNaN(p)) total.value = (l*p).toFixed(2);
+    } else if(changed === 'total'){
+      if(!isNaN(l) && !isNaN(t) && l>0) price.value = (t/l).toFixed(2);
+    }
   }
-  liters.addEventListener('input', recalc);
-  price.addEventListener('input', recalc);
 }
 
 function saveEntry(){
@@ -502,17 +534,54 @@ function deleteEntry(){
   renderAll();
 }
 
-function openVehicleSheet(){
-  document.getElementById('v_name').value = '';
+let renameMode = false;
+
+function openVehicleSheet(rename){
+  renameMode = !!rename;
+  const title = document.getElementById('vehicleSheetTitle');
+  const saveBtn = document.getElementById('vehicleSaveBtn');
+  const delBtn = document.getElementById('vehicleDeleteBtn');
+  if(renameMode){
+    const v = data.vehicles.find(x=>x.id===data.activeVehicleId);
+    title.textContent = 'Rename Vehicle';
+    document.getElementById('v_name').value = v ? v.name : '';
+    saveBtn.textContent = 'Save Name';
+    delBtn.style.display = data.vehicles.length > 1 ? 'block' : 'none';
+  } else {
+    title.textContent = 'Add Vehicle';
+    document.getElementById('v_name').value = '';
+    saveBtn.textContent = 'Add Vehicle';
+    delBtn.style.display = 'none';
+  }
   document.getElementById('vehicleOverlay').classList.add('show');
 }
 function closeVehicleSheet(){ document.getElementById('vehicleOverlay').classList.remove('show'); }
+
 function saveVehicle(){
   const name = document.getElementById('v_name').value.trim();
   if(!name){ alert('Please enter a vehicle name.'); return; }
-  const id = uid();
-  data.vehicles.push({id, name});
-  data.activeVehicleId = id;
+
+  if(renameMode){
+    const v = data.vehicles.find(x=>x.id===data.activeVehicleId);
+    if(v) v.name = name;
+  } else {
+    const id = uid();
+    data.vehicles.push({id, name});
+    data.activeVehicleId = id;
+  }
+  saveData();
+  closeVehicleSheet();
+  renderVehicles();
+  renderAll();
+}
+
+function deleteVehicle(){
+  if(data.vehicles.length <= 1){ alert("You need at least one vehicle."); return; }
+  const v = data.vehicles.find(x=>x.id===data.activeVehicleId);
+  if(!confirm(`Delete "${v.name}" and all its fill-up history? This cannot be undone.`)) return;
+  data.entries = data.entries.filter(e=>e.vehicleId !== data.activeVehicleId);
+  data.vehicles = data.vehicles.filter(x=>x.id !== data.activeVehicleId);
+  data.activeVehicleId = data.vehicles[0].id;
   saveData();
   closeVehicleSheet();
   renderVehicles();
