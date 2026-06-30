@@ -3,157 +3,209 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
-<title>Fuel Tracker</title>
+<title>Kamote AIO</title>
 <style>
   :root{
-    --bg:#aed0ec;
-    --bg-deep:#9ec4e8;
+    --bg:#f3f5f9;
+    --bg-deep:#eef1f6;
     --card:#ffffff;
-    --ink:#15192b;
-    --muted:#8a93a6;
-    --line:#eef1f6;
-    --yellow:#f6d650;
-    --yellow-dark:#e8c328;
-    --pill:#eef4fb;
+    --ink:#1a1d27;
+    --muted:#8b93a3;
+    --line:#eef0f4;
+    --accent:#2f6fed;
+    --accent-dark:#1d54c2;
+    --pill:#f4f6fa;
     --danger:#e0563f;
-    --chip1:#1f6feb; --chip2:#16a34a; --chip3:#ea580c; --chip4:#7c3aed; --chip5:#dc2626; --chip6:#0891b2;
+    --cost-bg:#fdecea; --cost-ink:#c0392b;
+    --income-bg:#e8f8ee; --income-ink:#16a34a;
+    --refuel:#2f6fed; --expense:#dc2626; --service:#92664b; --income:#16a34a;
+    --chip1:#2f6fed; --chip2:#16a34a; --chip3:#ea580c; --chip4:#7c3aed; --chip5:#dc2626; --chip6:#0891b2;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   body{
     margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background:var(--bg);
-    background-image:radial-gradient(circle at 100% 0%, var(--bg-deep), transparent 60%);
     color:var(--ink); padding-bottom:100px; min-height:100vh;
+    -webkit-font-smoothing:antialiased;
   }
-  .screen{max-width:520px; margin:0 auto; padding:18px 16px 0;}
+  .screen{max-width:520px; margin:0 auto; padding:20px 16px 0;}
 
   .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
   .circle-btn{
-    width:42px; height:42px; border-radius:50%; background:#fff; border:none;
-    display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--ink);
-    box-shadow:0 2px 6px rgba(15,23,42,.08); cursor:pointer;
+    width:38px; height:38px; border-radius:11px; background:#fff; border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:16px; color:var(--ink);
+    box-shadow:0 1px 2px rgba(15,23,42,.04); cursor:pointer;
   }
-  .topbar h1{font-size:22px; font-weight:800; margin:0;}
+  .topbar h1{font-size:18px; font-weight:700; margin:0; letter-spacing:-.01em;}
 
   .vehicle-scroll{display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; padding-bottom:2px;}
   .vehicle-pill{
-    flex:0 0 auto; padding:9px 16px; border-radius:999px; background:#fff; color:var(--ink);
-    font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 2px 6px rgba(15,23,42,.06); white-space:nowrap;
+    flex:0 0 auto; padding:8px 14px; border-radius:10px; background:#fff; color:var(--ink);
+    font-size:13px; font-weight:600; cursor:pointer; border:1px solid var(--line); white-space:nowrap;
   }
-  .vehicle-pill.active{background:var(--ink); color:#fff;}
-  .vehicle-pill.add{background:var(--yellow); color:var(--ink);}
+  .vehicle-pill.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+
+  .tabbar{display:flex; gap:4px; background:#fff; border-radius:12px; padding:4px; margin-bottom:16px; border:1px solid var(--line);}
+  .tabbar .tab{flex:1; text-align:center; padding:9px 0; border-radius:9px; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer;}
+  .tabbar .tab.active{background:var(--accent); color:#fff;}
+
+  /* type filter pills */
+  .type-filters{display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; padding-bottom:2px;}
+  .type-pill{
+    flex:0 0 auto; display:flex; align-items:center; gap:6px; padding:8px 14px; border-radius:10px;
+    background:#fff; border:1px solid var(--line); font-size:13px; font-weight:600; cursor:pointer;
+    color:var(--muted); white-space:nowrap;
+  }
+  .type-pill[data-type="all"].active{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .type-pill[data-type="refuel"].active{background:#eaf1fe; border-color:var(--refuel); color:var(--accent-dark);}
+  .type-pill[data-type="expense"].active{background:#fdecea; border-color:var(--expense); color:var(--expense);}
+  .type-pill[data-type="service"].active{background:#f1e9e3; border-color:var(--service); color:var(--service);}
 
   .hero-card{
-    background:#fff; border-radius:26px; padding:20px; margin-bottom:16px;
-    box-shadow:0 8px 24px rgba(15,40,80,.12);
+    background:#fff; border-radius:18px; padding:20px; margin-bottom:16px;
+    border:1px solid var(--line);
   }
-  .range-tabs{display:flex; gap:6px; background:var(--pill); border-radius:999px; padding:4px; margin-bottom:16px;}
-  .range-tab{flex:1; text-align:center; padding:8px 0; border-radius:999px; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer;}
+  .range-tabs{display:flex; gap:4px; background:var(--pill); border-radius:10px; padding:4px; margin-bottom:16px;}
+  .range-tab{flex:1; text-align:center; padding:8px 0; border-radius:7px; font-size:12px; font-weight:600; color:var(--muted); cursor:pointer;}
   .range-tab.active{background:var(--ink); color:#fff;}
 
-  .hero-period{font-size:12px; color:var(--muted); font-weight:600; margin-bottom:4px;}
-  .hero-amount{font-size:34px; font-weight:800; margin-bottom:18px; letter-spacing:-.5px;}
+  .hero-period{font-size:12px; color:var(--muted); font-weight:500; margin-bottom:4px;}
+  .hero-amount{font-size:30px; font-weight:700; margin-bottom:18px; letter-spacing:-.5px;}
 
   .bars{display:flex; align-items:flex-end; gap:10px; height:150px; margin-bottom:10px;}
   .bar-col{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; position:relative;}
   .bar{
-    width:100%; max-width:34px; border-radius:10px 10px 6px 6px; background:#dbeafd;
+    width:100%; max-width:34px; border-radius:6px 6px 3px 3px; background:#e3ebfc;
     position:relative; transition:height .25s ease;
   }
-  .bar.peak{background:repeating-linear-gradient(135deg, var(--ink), var(--ink) 4px, #2a3142 4px, #2a3142 8px);}
-  .bar-amt{position:absolute; top:-20px; font-size:10px; font-weight:700; color:var(--ink); white-space:nowrap;}
-  .bar-label{font-size:11px; color:var(--muted); font-weight:600; margin-top:8px;}
+  .bar.peak{background:var(--accent);}
+  .bar-amt{position:absolute; top:-20px; font-size:10px; font-weight:600; color:var(--ink); white-space:nowrap;}
+  .bar-label{font-size:11px; color:var(--muted); font-weight:500; margin-top:8px;}
 
-  .section-title{font-size:13px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin:18px 0 10px;}
+  .section-title{font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin:18px 0 10px;}
 
-  .card{background:#fff; border-radius:20px; padding:6px 16px; margin-bottom:16px; box-shadow:0 4px 16px rgba(15,40,80,.08);}
+  .card{background:#fff; border-radius:16px; padding:6px 16px; margin-bottom:16px; border:1px solid var(--line);}
+
+  /* summary cards (cost / income / distance) */
+  .summary-card{border-radius:16px; margin-bottom:14px; overflow:hidden; border:1px solid var(--line); background:#fff;}
+  .summary-head{padding:12px 16px; font-size:13px; font-weight:700;}
+  .summary-head.cost{background:var(--cost-bg); color:var(--cost-ink);}
+  .summary-head.income{background:var(--income-bg); color:var(--income-ink);}
+  .summary-head.neutral{background:var(--pill); color:var(--ink);}
+  .summary-body{display:flex; padding:14px 16px; gap:8px;}
+  .summary-stat{flex:1; min-width:0;}
+  .summary-stat .label{font-size:10.5px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.03em;}
+  .summary-stat .value{font-size:15px; font-weight:700; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+  /* donut chart */
+  .donut-wrap{display:flex; align-items:center; gap:18px; padding:16px;}
+  .donut{width:128px; height:128px; border-radius:50%; flex:0 0 auto; position:relative;}
+  .donut::after{content:''; position:absolute; inset:24px; background:#fff; border-radius:50%;}
+  .donut-legend{flex:1; display:flex; flex-direction:column; gap:9px;}
+  .legend-row{display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600;}
+  .legend-dot{width:9px; height:9px; border-radius:3px; flex:0 0 auto;}
+  .legend-pct{margin-left:auto; color:var(--muted); font-weight:600;}
 
   .list-row{display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid var(--line);}
   .list-row:last-child{border-bottom:none;}
   .avatar{
-    width:42px; height:42px; border-radius:50%; flex:0 0 auto; display:flex; align-items:center; justify-content:center;
-    color:#fff; font-weight:800; font-size:14px;
+    width:38px; height:38px; border-radius:11px; flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:15px;
   }
   .list-main{flex:1; min-width:0;}
-  .list-title{font-size:14px; font-weight:700;}
+  .list-title{font-size:14px; font-weight:600;}
   .list-sub{font-size:12px; color:var(--muted); margin-top:1px;}
-  .list-amt{font-weight:800; font-size:14px; text-align:right; white-space:nowrap;}
-  .list-amt .kml{display:block; font-size:11px; color:#16a34a; font-weight:700; margin-top:2px;}
+  .list-amt{font-weight:700; font-size:14px; text-align:right; white-space:nowrap;}
+  .list-amt.cost{color:var(--cost-ink);}
+  .list-amt.income{color:var(--income-ink);}
+  .list-amt .kml{display:block; font-size:11px; color:#16a34a; font-weight:600; margin-top:2px;}
 
   .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;}
-  .stat-card{background:#fff; border-radius:18px; padding:14px; box-shadow:0 4px 16px rgba(15,40,80,.08);}
-  .stat-card .label{font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.03em;}
-  .stat-card .value{font-size:19px; font-weight:800; margin-top:4px;}
-  .stat-card .sub-trend{font-size:11px; font-weight:700; margin-top:3px;}
+  .stat-card{background:#fff; border-radius:14px; padding:14px; border:1px solid var(--line);}
+  .stat-card .label{font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.03em;}
+  .stat-card .value{font-size:18px; font-weight:700; margin-top:4px;}
+  .stat-card .sub-trend{font-size:11px; font-weight:600; margin-top:3px;}
   .sub-trend.up{color:#dc2626;}
   .sub-trend.down{color:#16a34a;}
   .sub-trend.flat{color:var(--muted);}
 
-  .reminder-card{
-    border-radius:18px; padding:14px 16px; margin-bottom:16px; display:flex; align-items:center; gap:12px;
-  }
-  .reminder-card.due{background:#fff4e0;}
-  .reminder-card.ok{background:#eaf7ef;}
-  .reminder-icon{font-size:22px; flex:0 0 auto;}
-  .reminder-text{font-size:13px; font-weight:700; line-height:1.4;}
-  .reminder-text .sub{font-weight:600; color:var(--muted); font-size:12px; display:block; margin-top:1px;}
+  /* reminders */
+  .reminder-row{display:flex; align-items:center; gap:12px; padding:14px 0; border-bottom:1px solid var(--line); cursor:pointer;}
+  .reminder-row:last-child{border-bottom:none;}
+  .reminder-icon-wrap{width:38px; height:38px; border-radius:11px; background:var(--pill); display:flex; align-items:center; justify-content:center; font-size:16px; flex:0 0 auto;}
+  .reminder-main{flex:1; min-width:0;}
+  .reminder-title{font-size:14px; font-weight:600;}
+  .reminder-meta{font-size:12px; color:var(--muted); margin-top:2px; display:flex; gap:10px; flex-wrap:wrap;}
+  .reminder-when{font-size:12px; font-weight:700; text-align:right; white-space:nowrap;}
+  .reminder-when.due{color:var(--danger);}
+  .reminder-when.ok{color:var(--muted);}
 
   .empty{text-align:center; color:var(--muted); padding:26px 10px; font-size:13px;}
-  .empty .big{font-size:30px; margin-bottom:6px;}
+  .empty .big{font-size:28px; margin-bottom:6px;}
 
   .fab{
-    position:fixed; right:18px; bottom:22px; width:60px; height:60px; border-radius:50%;
-    background:var(--yellow); color:var(--ink); font-size:28px; border:none;
-    box-shadow:0 8px 20px rgba(232,195,40,.5); cursor:pointer; z-index:20; line-height:0; font-weight:800;
+    position:fixed; right:18px; bottom:22px; width:54px; height:54px; border-radius:16px;
+    background:var(--accent); color:#fff; font-size:24px; border:none;
+    box-shadow:0 6px 16px rgba(47,111,237,.35); cursor:pointer; z-index:20; line-height:0; font-weight:700;
   }
 
   .sheet-overlay{position:fixed; inset:0; background:rgba(15,23,42,.45); display:none; z-index:30; align-items:flex-end; justify-content:center;}
   .sheet-overlay.show{display:flex;}
-  .sheet{background:#fff; width:100%; max-width:520px; border-radius:26px 26px 0 0; padding:18px 18px 26px; max-height:88vh; overflow-y:auto; animation:slideUp .22s ease-out;}
+  .sheet{background:#fff; width:100%; max-width:520px; border-radius:20px 20px 0 0; padding:18px 18px 26px; max-height:88vh; overflow-y:auto; animation:slideUp .22s ease-out;}
   @keyframes slideUp{from{transform:translateY(30px); opacity:0;} to{transform:translateY(0); opacity:1;}}
-  .sheet h3{margin:0 0 16px; font-size:18px; font-weight:800;}
+  .sheet h3{margin:0 0 16px; font-size:17px; font-weight:700;}
   .sheet-close{width:36px; height:4px; background:var(--line); border-radius:2px; margin:0 auto 16px;}
 
   .field{margin-bottom:12px;}
-  .field label{display:block; font-size:11px; font-weight:700; color:var(--muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:.03em;}
-  .field input{width:100%; padding:13px 14px; border-radius:14px; border:none; background:var(--pill); font-size:15px; color:var(--ink);}
-  .field input:focus{outline:2px solid var(--ink);}
+  .field label{display:block; font-size:11px; font-weight:600; color:var(--muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:.03em;}
+  .field input, .field select{width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--line); background:var(--pill); font-size:15px; color:var(--ink); font-family:inherit;}
+  .field input:focus, .field select:focus{outline:none; border-color:var(--accent); background:#fff;}
   .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
-  .toggle-group{display:flex; gap:8px; margin-bottom:14px;}
-  .toggle-btn{flex:1; padding:10px; text-align:center; border-radius:14px; font-size:12.5px; font-weight:700; color:var(--muted); cursor:pointer; background:var(--pill);}
-  .toggle-btn.active{background:var(--ink); color:#fff;}
-  .checkbox-row{display:flex; align-items:center; gap:9px; margin-bottom:16px; background:var(--pill); padding:12px 14px; border-radius:14px;}
+  .toggle-group{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  .toggle-btn{flex:1; min-width:80px; padding:10px; text-align:center; border-radius:10px; font-size:12.5px; font-weight:600; color:var(--muted); cursor:pointer; background:var(--pill); border:1px solid var(--line);}
+  .toggle-btn.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .checkbox-row{display:flex; align-items:center; gap:9px; margin-bottom:16px; background:var(--pill); padding:12px 14px; border-radius:10px; border:1px solid var(--line);}
   .checkbox-row input{width:18px; height:18px;}
-  .checkbox-row label{font-size:14px; font-weight:700; margin:0;}
-  .computed-note{font-size:12px; color:#16a34a; background:#ecfdf5; padding:9px 12px; border-radius:12px; margin-bottom:12px; font-weight:700;}
+  .checkbox-row label{font-size:14px; font-weight:600; margin:0;}
 
-  .btn{width:100%; padding:15px; border-radius:16px; border:none; font-size:15px; font-weight:800; cursor:pointer;}
-  .btn-primary{background:var(--yellow); color:var(--ink);}
-  .btn-secondary{background:var(--pill); color:var(--ink); margin-top:8px;}
-  .btn-danger{background:#fdeeea; color:var(--danger); margin-top:8px;}
-
-  .tabbar{display:flex; gap:8px; background:#fff; border-radius:999px; padding:4px; margin-bottom:16px; box-shadow:0 4px 14px rgba(15,40,80,.08);}
-  .tabbar .tab{flex:1; text-align:center; padding:10px 0; border-radius:999px; font-size:13px; font-weight:700; color:var(--muted); cursor:pointer;}
-  .tabbar .tab.active{background:var(--ink); color:#fff;}
+  .btn{width:100%; padding:14px; border-radius:12px; border:none; font-size:14.5px; font-weight:700; cursor:pointer;}
+  .btn-primary{background:var(--accent); color:#fff;}
+  .btn-secondary{background:var(--pill); color:var(--ink); margin-top:8px; border:1px solid var(--line);}
+  .btn-danger{background:#fdeeea; color:var(--danger); margin-top:8px;}  .circle-btn svg{width:17px; height:17px;}
+  .type-pill svg{width:14px; height:14px; flex:0 0 auto;}
+  .toggle-btn svg{width:14px; height:14px; vertical-align:-3px; margin-right:4px;}
+  .avatar svg{width:18px; height:18px;}
+  .reminder-icon-wrap svg{width:18px; height:18px; color:var(--ink);}
+  .empty svg{width:30px; height:30px; color:var(--muted); margin-bottom:6px;}
+  .fab svg{width:23px; height:23px;}
+  .summary-stat svg{width:20px; height:20px;}
 </style>
 </head>
 <body>
 
 <div class="screen">
   <div class="topbar">
-    <button class="circle-btn" onclick="switchTab('dashboard')">⛽</button>
-    <h1>Fuel Tracker</h1>
-    <button class="circle-btn" onclick="openVehicleSheet()">＋</button>
+    <button class="circle-btn" onclick="switchTab('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="15" y2="22"/><line x1="4" y1="9" x2="14" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg></button>
+    <h1>Kamote AIO</h1>
+    <button class="circle-btn" onclick="openVehicleSheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
   </div>
 
   <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
     <div class="vehicle-scroll" id="vehicleRow" style="margin-bottom:0; flex:1;"></div>
-    <button class="circle-btn" style="width:36px; height:36px; font-size:14px; flex:0 0 auto;" onclick="openVehicleSheet(true)">✎</button>
+    <button class="circle-btn" style="width:32px; height:32px; flex:0 0 auto;" onclick="openVehicleSheet(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
   </div>
 
   <div class="tabbar">
     <div class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">Analytics</div>
     <div class="tab" data-tab="history" onclick="switchTab('history')">History</div>
+    <div class="tab" data-tab="reminders" onclick="switchTab('reminders')">Reminders</div>
+  </div>
+
+  <div class="type-filters" id="typeFilters">
+    <div class="type-pill active" data-type="all" onclick="setTypeFilter('all')">All</div>
+    <div class="type-pill" data-type="refuel" onclick="setTypeFilter('refuel')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="15" y2="22"/><line x1="4" y1="9" x2="14" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg>Refuel</div>
+    <div class="type-pill" data-type="expense" onclick="setTypeFilter('expense')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>Expense</div>
+    <div class="type-pill" data-type="service" onclick="setTypeFilter('service')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"/></svg>Service</div>
   </div>
 
   <div id="dashboard">
@@ -169,7 +221,41 @@
       <div class="bars" id="bars"></div>
     </div>
 
-    <div id="reminderCard"></div>
+    <div class="summary-card">
+      <div class="summary-head cost">Cost</div>
+      <div class="summary-body">
+        <div class="summary-stat"><div class="label">Total</div><div class="value" id="costTotal">₱0</div></div>
+        <div class="summary-stat"><div class="label">By day</div><div class="value" id="costByDay">₱0</div></div>
+        <div class="summary-stat"><div class="label">By km</div><div class="value" id="costByKm">₱0</div></div>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-head income">Income</div>
+      <div class="summary-body">
+        <div class="summary-stat"><div class="label">Total</div><div class="value" id="incomeTotal">₱0</div></div>
+        <div class="summary-stat"><div class="label">By day</div><div class="value" id="incomeByDay">₱0</div></div>
+        <div class="summary-stat"><div class="label">By km</div><div class="value" id="incomeByKm">₱0</div></div>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-head neutral">Distance</div>
+      <div class="summary-body">
+        <div class="summary-stat"><div class="label">Total</div><div class="value" id="distTotal">0 km</div></div>
+        <div class="summary-stat"><div class="label">Daily average</div><div class="value" id="distAvg">0 km</div></div>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-head neutral">Cost Comparison</div>
+      <div class="donut-wrap">
+        <div class="donut" id="donut"></div>
+        <div class="donut-legend" id="donutLegend"></div>
+      </div>
+    </div>
+
+    <div id="reminderTeaser"></div>
 
     <div class="stat-grid">
       <div class="stat-card">
@@ -194,44 +280,88 @@
     <div class="section-title">Fill-up History</div>
     <div class="card"><div id="entryList"></div></div>
   </div>
+
+  <div id="reminders" style="display:none;">
+    <div class="section-title">Reminders</div>
+    <div class="card"><div id="reminderList"></div></div>
+  </div>
 </div>
 
-<button class="fab" onclick="openEntrySheet()">＋</button>
+<button class="fab" id="fab" onclick="openEntrySheet()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
 
 <!-- Add/Edit Entry Sheet -->
 <div class="sheet-overlay" id="entryOverlay">
   <div class="sheet">
     <div class="sheet-close"></div>
-    <h3 id="entryTitle">New fuel log</h3>
+    <h3 id="entryTitle">New entry</h3>
+
+    <div class="toggle-group" id="entryTypeToggle">
+      <div class="toggle-btn active" data-et="refuel" onclick="setEntryType('refuel')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="15" y2="22"/><line x1="4" y1="9" x2="14" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg>Refuel</div>
+      <div class="toggle-btn" data-et="expense" onclick="setEntryType('expense')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>Expense</div>
+      <div class="toggle-btn" data-et="service" onclick="setEntryType('service')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"/></svg>Service</div>
+      <div class="toggle-btn" data-et="income" onclick="setEntryType('income')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>Income</div>
+    </div>
 
     <div class="field"><label>Date</label><input type="date" id="f_date"></div>
 
-    <div class="toggle-group">
-      <div class="toggle-btn active" id="modeOdo" onclick="setDistanceMode('odo')">I have odometer</div>
-      <div class="toggle-btn" id="modeDist" onclick="setDistanceMode('dist')">I only know km traveled</div>
+    <!-- REFUEL fields -->
+    <div id="fieldsRefuel">
+      <div class="toggle-group">
+        <div class="toggle-btn active" id="modeOdo" onclick="setDistanceMode('odo')">I have odometer</div>
+        <div class="toggle-btn" id="modeDist" onclick="setDistanceMode('dist')">I only know km traveled</div>
+      </div>
+      <div id="odoFields">
+        <div class="field"><label>Odometer Reading (km)</label><input type="number" id="f_odo" inputmode="decimal" placeholder="e.g. 45230"></div>
+      </div>
+      <div id="distFields" style="display:none;">
+        <div class="field"><label>Km traveled since last fill-up</label><input type="number" id="f_dist" inputmode="decimal" placeholder="e.g. 320"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Liters</label><input type="number" id="f_liters" inputmode="decimal" placeholder="e.g. 30.5"></div>
+        <div class="field"><label>Price / Liter (₱)</label><input type="number" id="f_price" inputmode="decimal" placeholder="e.g. 74.20"></div>
+      </div>
+      <div class="field"><label>Total Cost (₱) — enter this if you didn't catch the price/L</label><input type="number" id="f_total" inputmode="decimal" placeholder="0.00"></div>
+      <div class="field"><label>Station (optional)</label><input type="text" id="f_station" placeholder="e.g. Petron, Shell, Caltex"></div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="f_full" checked>
+        <label for="f_full">Full tank (uncheck if you only partially filled)</label>
+      </div>
     </div>
 
-    <div id="odoFields">
-      <div class="field"><label>Odometer Reading (km)</label><input type="number" id="f_odo" inputmode="decimal" placeholder="e.g. 45230"></div>
-    </div>
-    <div id="distFields" style="display:none;">
-      <div class="field"><label>Km traveled since last fill-up</label><input type="number" id="f_dist" inputmode="decimal" placeholder="e.g. 320"></div>
-    </div>
-
-    <div class="row2">
-      <div class="field"><label>Liters</label><input type="number" id="f_liters" inputmode="decimal" placeholder="e.g. 30.5"></div>
-      <div class="field"><label>Price / Liter (₱)</label><input type="number" id="f_price" inputmode="decimal" placeholder="e.g. 74.20"></div>
-    </div>
-
-    <div class="field"><label>Total Cost (₱) — enter this if you didn't catch the price/L</label><input type="number" id="f_total" inputmode="decimal" placeholder="0.00"></div>
-    <div class="field"><label>Station (optional)</label><input type="text" id="f_station" placeholder="e.g. Petron, Shell, Caltex"></div>
-
-    <div class="checkbox-row">
-      <input type="checkbox" id="f_full" checked>
-      <label for="f_full">Full tank (uncheck if you only partially filled)</label>
+    <!-- EXPENSE fields -->
+    <div id="fieldsExpense" style="display:none;">
+      <div class="field"><label>Category</label>
+        <select id="f_exp_cat">
+          <option>Toll</option><option>Parking</option><option>Fine</option>
+          <option>Registration</option><option>Car Wash</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Amount (₱)</label><input type="number" id="f_exp_amt" inputmode="decimal" placeholder="0.00"></div>
+      <div class="field"><label>Note (optional)</label><input type="text" id="f_exp_note" placeholder="e.g. NLEX toll"></div>
+      <div class="field"><label>Odometer (optional, km)</label><input type="number" id="f_exp_odo" inputmode="decimal" placeholder="e.g. 45230"></div>
     </div>
 
-    <button class="btn btn-primary" onclick="saveEntry()">Save Fill-up</button>
+    <!-- SERVICE fields -->
+    <div id="fieldsService" style="display:none;">
+      <div class="field"><label>Category</label>
+        <select id="f_svc_cat">
+          <option>Oil Change</option><option>Brake Fluid</option><option>New Tires</option>
+          <option>Car Wash</option><option>Repair</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Amount (₱)</label><input type="number" id="f_svc_amt" inputmode="decimal" placeholder="0.00"></div>
+      <div class="field"><label>Note (optional)</label><input type="text" id="f_svc_note" placeholder="e.g. Hyundai official"></div>
+      <div class="field"><label>Odometer (optional, km)</label><input type="number" id="f_svc_odo" inputmode="decimal" placeholder="e.g. 45230"></div>
+    </div>
+
+    <!-- INCOME fields -->
+    <div id="fieldsIncome" style="display:none;">
+      <div class="field"><label>Amount (₱)</label><input type="number" id="f_inc_amt" inputmode="decimal" placeholder="0.00"></div>
+      <div class="field"><label>Source (optional)</label><input type="text" id="f_inc_note" placeholder="e.g. Transport application"></div>
+      <div class="field"><label>Odometer (optional, km)</label><input type="number" id="f_inc_odo" inputmode="decimal" placeholder="e.g. 45230"></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="saveEntry()">Save Entry</button>
     <button class="btn btn-secondary" onclick="closeEntrySheet()">Cancel</button>
     <button class="btn btn-danger" id="deleteBtn" style="display:none;" onclick="deleteEntry()">Delete Entry</button>
   </div>
@@ -249,20 +379,61 @@
   </div>
 </div>
 
+<!-- Add/Edit Reminder Sheet -->
+<div class="sheet-overlay" id="reminderOverlay">
+  <div class="sheet">
+    <div class="sheet-close"></div>
+    <h3 id="reminderSheetTitle">New reminder</h3>
+    <div class="toggle-group">
+      <div class="toggle-btn active" id="rTypeBill" onclick="setReminderType('bill')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>Bill</div>
+      <div class="toggle-btn" id="rTypeService" onclick="setReminderType('service')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"/></svg>Service</div>
+    </div>
+    <div class="field"><label>Title</label><input type="text" id="r_title" placeholder="e.g. Oil Change, Registration"></div>
+    <div class="field"><label>Due date</label><input type="date" id="r_date"></div>
+    <div class="field"><label>Due at odometer (optional, km)</label><input type="number" id="r_km" inputmode="decimal" placeholder="e.g. 50000"></div>
+    <button class="btn btn-primary" onclick="saveReminder()">Save Reminder</button>
+    <button class="btn btn-secondary" onclick="closeReminderSheet()">Cancel</button>
+    <button class="btn btn-danger" id="reminderDeleteBtn" style="display:none;" onclick="deleteReminder()">Delete Reminder</button>
+  </div>
+</div>
+
 <script>
-const STORAGE_KEY = 'fueltracker_data_v1';
+const STORAGE_KEY = 'fueltracker_data_v2';
+const OLD_KEY = 'fueltracker_data_v1';
 const CHIP_COLORS = ['#1f6feb','#16a34a','#ea580c','#7c3aed','#dc2626','#0891b2','#ca8a04','#db2777'];
+const TYPE_COLOR = { refuel:'#1f6feb', expense:'#dc2626', service:'#92664b', income:'#16a34a' };
+const ICON_FUEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="15" y2="22"/><line x1="4" y1="9" x2="14" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg>';
+const ICON_RECEIPT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>';
+const ICON_WRENCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z"/></svg>';
+const ICON_WALLET = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>';
+const ICON_CLOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+const ICON_TREND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>';
+const TYPE_ICON = { refuel:ICON_FUEL, expense:ICON_RECEIPT, service:ICON_WRENCH, income:ICON_WALLET };
 
 function loadData(){
-  try{ const raw = localStorage.getItem(STORAGE_KEY); if(raw) return JSON.parse(raw); }catch(e){}
-  return { vehicles: [], activeVehicleId: null, entries: [] };
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+    // migrate from v1 if present
+    const old = localStorage.getItem(OLD_KEY);
+    if(old){
+      const o = JSON.parse(old);
+      const entries = (o.entries||[]).map(e=>({...e, type:'refuel'}));
+      return { vehicles:o.vehicles||[], activeVehicleId:o.activeVehicleId||null, entries, reminders:[] };
+    }
+  }catch(e){}
+  return { vehicles: [], activeVehicleId: null, entries: [], reminders: [] };
 }
 function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
 let data = loadData();
 let editingEntryId = null;
+let editingReminderId = null;
 let distanceMode = 'odo';
+let entryType = 'refuel';
+let reminderType = 'bill';
 let currentRange = 6;
+let typeFilter = 'all';
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 
@@ -274,6 +445,7 @@ function init(){
     saveData();
   }
   if(!data.activeVehicleId) data.activeVehicleId = data.vehicles[0].id;
+  if(!data.reminders) data.reminders = [];
   renderVehicles();
   renderAll();
   document.getElementById('f_date').value = new Date().toISOString().slice(0,10);
@@ -294,12 +466,15 @@ function renderVehicles(){
 function getActiveEntries(){
   return data.entries.filter(e=>e.vehicleId === data.activeVehicleId).sort((a,b)=> a.date.localeCompare(b.date));
 }
+function getActiveReminders(){
+  return data.reminders.filter(r=>r.vehicleId === data.activeVehicleId);
+}
+function getRefuelEntries(){ return getActiveEntries().filter(e=>e.type==='refuel'); }
 
 function entryDistance(e){
-  // Raw distance traveled for this entry's interval (regardless of full/partial).
-  // Used for cost/km and cadence — actual km driven is actual km driven either way.
+  if(e.type !== 'refuel') return null;
   if(e.distMode === 'dist') return e.distance;
-  const entries = getActiveEntries().filter(x=>x.distMode==='odo');
+  const entries = getRefuelEntries().filter(x=>x.distMode==='odo');
   const idx = entries.findIndex(x=>x.id===e.id);
   if(idx <= 0) return null;
   const prev = entries[idx-1];
@@ -307,16 +482,18 @@ function entryDistance(e){
   return e.odo - prev.odo;
 }
 
-// km/L is only meaningful full-tank to full-tank: partial fills don't tell you
-// how much fuel was actually burned, only liters added. So we accumulate liters
-// and distance across partial fills and only resolve a km/L figure once we hit
-// the next full tank, attributing it back to that closing entry.
+function latestOdo(){
+  const withOdo = getRefuelEntries().filter(e=>e.distMode==='odo' && e.odo!=null);
+  if(!withOdo.length) return null;
+  return withOdo[withOdo.length-1].odo;
+}
+
 function computeFullTankSegments(entries){
   const kmlByEntryId = {};
-  const segments = []; // {entryId, date, kml}
+  const segments = [];
   let litersAcc = 0, distAcc = 0, distKnown = true;
 
-  entries.forEach(e=>{
+  entries.filter(e=>e.type==='refuel').forEach(e=>{
     const d = entryDistance(e);
     if(d == null) distKnown = false; else distAcc += d;
     litersAcc += e.liters;
@@ -346,6 +523,12 @@ function setRange(r){
   renderAll();
 }
 
+function setTypeFilter(t){
+  typeFilter = t;
+  document.querySelectorAll('.type-pill').forEach(p=>p.classList.toggle('active', p.dataset.type===t));
+  renderAll();
+}
+
 function monthKey(d){ return d.slice(0,7); }
 function monthLabel(key){
   const [y,m] = key.split('-');
@@ -361,61 +544,107 @@ function trendArrow(curr, prev, lowerIsBetter){
   return { cls: better ? 'down' : 'up', text: `${arrow} ${Math.abs(change).toFixed(0)}% vs. previous` };
 }
 
-function renderReminder(entries){
-  const card = document.getElementById('reminderCard');
-  if(entries.length < 2){ card.innerHTML = ''; return; }
+function daySpan(entries){
+  if(entries.length === 0) return 1;
+  const first = new Date(entries[0].date+'T00:00:00').getTime();
+  const last = new Date(entries[entries.length-1].date+'T00:00:00').getTime();
+  return Math.max(1, Math.round((last-first)/86400000) + 1);
+}
 
-  const dates = entries.map(e=> new Date(e.date+'T00:00:00').getTime());
-  const gaps = [];
-  for(let i=1;i<dates.length;i++) gaps.push((dates[i]-dates[i-1]) / 86400000);
-  const avgGap = gaps.reduce((a,b)=>a+b,0) / gaps.length;
+function renderReminderTeaser(){
+  const wrap = document.getElementById('reminderTeaser');
+  const reminders = getActiveReminders();
+  const now = Date.now();
+  const odo = latestOdo();
 
-  const lastDate = dates[dates.length-1];
-  const daysSince = Math.round((Date.now() - lastDate) / 86400000);
-  const isDue = daysSince >= avgGap;
+  const withInfo = reminders.map(r=>{
+    const dDays = r.date ? Math.round((new Date(r.date+'T00:00:00').getTime()-now)/86400000) : null;
+    const dKm = (r.km!=null && odo!=null) ? r.km - odo : null;
+    return {...r, dDays, dKm};
+  }).sort((a,b)=>{
+    const av = a.dDays ?? Infinity, bv = b.dDays ?? Infinity;
+    return av-bv;
+  });
 
-  if(avgGap < 1){ card.innerHTML = ''; return; }
+  if(withInfo.length === 0){ wrap.innerHTML=''; return; }
+  const next = withInfo[0];
+  const isDue = (next.dDays!=null && next.dDays<=3) || (next.dKm!=null && next.dKm<=200);
+  const whenText = next.dDays!=null
+    ? (next.dDays<0 ? `${Math.abs(next.dDays)}d overdue` : `In ${next.dDays} days`)
+    : (next.dKm!=null ? `In ${next.dKm} km` : '');
 
-  if(isDue){
-    const overdue = Math.round(daysSince - avgGap);
-    card.innerHTML = `<div class="reminder-card due">
-      <div class="reminder-icon">⏰</div>
-      <div class="reminder-text">It's been ${daysSince} days since your last fill-up
-        <span class="sub">You usually fill up every ~${Math.round(avgGap)} days — might be time soon${overdue>0?` (about ${overdue}d overdue)`:''}</span>
+  wrap.innerHTML = `<div class="summary-card">
+    <div class="summary-head ${isDue?'cost':'neutral'}">Next Reminder</div>
+    <div class="summary-body" style="align-items:center; cursor:pointer;" onclick="switchTab('reminders')">
+      <div class="summary-stat" style="flex:0 0 auto; color:${isDue?'var(--cost-ink)':'var(--ink)'};">${next.type==='service'?ICON_WRENCH:ICON_RECEIPT}</div>
+      <div class="summary-stat">
+        <div class="value" style="font-size:14px;">${escapeHtml(next.title)}</div>
+        <div class="label" style="text-transform:none; font-weight:700; color:${isDue?'var(--cost-ink)':'var(--muted)'};">${whenText}</div>
       </div>
-    </div>`;
-  } else {
-    card.innerHTML = `<div class="reminder-card ok">
-      <div class="reminder-icon">✅</div>
-      <div class="reminder-text">${daysSince} days since your last fill-up
-        <span class="sub">You usually go ~${Math.round(avgGap)} days between fill-ups — you're good</span>
-      </div>
-    </div>`;
+    </div>
+  </div>`;
+}
+
+function renderDonut(costSums){
+  const donut = document.getElementById('donut');
+  const legend = document.getElementById('donutLegend');
+  const types = ['refuel','expense','service'];
+  const total = types.reduce((s,t)=> s + (costSums[t]||0), 0);
+
+  if(total <= 0){
+    donut.style.background = '#eef1f6';
+    legend.innerHTML = '<div class="empty" style="padding:6px;">No cost data yet</div>';
+    return;
   }
+
+  let acc = 0;
+  const stops = types.map(t=>{
+    const val = costSums[t]||0;
+    const pct = (val/total)*100;
+    const start = acc;
+    acc += pct;
+    return `${TYPE_COLOR[t]} ${start}% ${acc}%`;
+  }).join(', ');
+  donut.style.background = `conic-gradient(${stops})`;
+
+  legend.innerHTML = types.map(t=>{
+    const val = costSums[t]||0;
+    const pct = total>0 ? ((val/total)*100).toFixed(1) : '0.0';
+    const label = t.charAt(0).toUpperCase()+t.slice(1);
+    return `<div class="legend-row">
+      <div class="legend-dot" style="background:${TYPE_COLOR[t]};"></div>
+      <div>${label}</div>
+      <div class="legend-pct">${pct}%</div>
+    </div>`;
+  }).join('');
 }
 
 function renderAll(){
-  const entries = getActiveEntries();
+  const allEntries = getActiveEntries();
+  // entries shown in lists/bars respect the active type filter; 'all' = every cost+income type
+  const filteredEntries = typeFilter==='all' ? allEntries : allEntries.filter(e=>e.type===typeFilter);
 
-  renderReminder(entries);
+  renderReminderTeaser();
 
-  // group by month
+  // ---- monthly bars (based on filtered entries' amounts, cost types only contribute, income excluded from spend bars) ----
+  const spendTypes = ['refuel','expense','service'];
+  const barsSource = filteredEntries.filter(e=> spendTypes.includes(e.type));
   const monthMap = {};
-  entries.forEach(e=>{
+  barsSource.forEach(e=>{
     const k = monthKey(e.date);
-    monthMap[k] = (monthMap[k]||0) + e.total;
+    monthMap[k] = (monthMap[k]||0) + e.amount;
   });
   let months = Object.keys(monthMap).sort();
   if(currentRange !== 999) months = months.slice(-currentRange);
   else months = months.slice(-12);
 
   const bars = document.getElementById('bars');
-  const total = months.reduce((s,k)=> s + (monthMap[k]||0), 0);
-  document.getElementById('heroAmount').textContent = '₱' + total.toLocaleString(undefined,{maximumFractionDigits:0});
+  const totalBars = months.reduce((s,k)=> s + (monthMap[k]||0), 0);
+  document.getElementById('heroAmount').textContent = '₱' + totalBars.toLocaleString(undefined,{maximumFractionDigits:0});
   document.getElementById('heroPeriod').textContent = months.length ? `${monthLabel(months[0])} – ${monthLabel(months[months.length-1])}` : 'No data yet';
 
   if(months.length === 0){
-    bars.innerHTML = '<div class="empty" style="width:100%;"><div class="big">📈</div>Add fill-ups to see trends</div>';
+    bars.innerHTML = '<div class="empty" style="width:100%;"><div class="big">'+ICON_TREND+'</div>Add entries to see trends</div>';
   } else {
     const max = Math.max(...months.map(k=>monthMap[k]), 1);
     bars.innerHTML = months.map(k=>{
@@ -430,27 +659,56 @@ function renderAll(){
     }).join('');
   }
 
-  // overall stats (all-time, not range-limited)
-  let totalLiters=0, totalDistAll=0, allSpent=0;
+  // ---- Cost / Income / Distance summary cards ----
+  const costEntries = (typeFilter==='all' ? allEntries.filter(e=>spendTypes.includes(e.type)) : filteredEntries.filter(e=>spendTypes.includes(e.type)));
+  const incomeEntries = allEntries.filter(e=>e.type==='income'); // income card always reflects all income, independent of cost-type pill
+
+  const costTotal = costEntries.reduce((s,e)=>s+e.amount,0);
+  const incomeTotal = incomeEntries.reduce((s,e)=>s+e.amount,0);
+
+  const refuelAll = getRefuelEntries();
+  let totalDist = 0;
+  refuelAll.forEach(e=>{ const d=entryDistance(e); if(d&&d>0) totalDist += d; });
+
+  const costDays = daySpan(costEntries);
+  const incomeDays = daySpan(incomeEntries);
+  const distDays = daySpan(refuelAll);
+
+  document.getElementById('costTotal').textContent = '₱'+costTotal.toLocaleString(undefined,{maximumFractionDigits:2});
+  document.getElementById('costByDay').textContent = '₱'+(costTotal/costDays).toFixed(2);
+  document.getElementById('costByKm').textContent = totalDist>0 ? '₱'+(costTotal/totalDist).toFixed(3) : '₱0.000';
+
+  document.getElementById('incomeTotal').textContent = '₱'+incomeTotal.toLocaleString(undefined,{maximumFractionDigits:2});
+  document.getElementById('incomeByDay').textContent = '₱'+(incomeTotal/incomeDays).toFixed(2);
+  document.getElementById('incomeByKm').textContent = totalDist>0 ? '₱'+(incomeTotal/totalDist).toFixed(3) : '₱0.000';
+
+  document.getElementById('distTotal').textContent = Math.round(totalDist).toLocaleString()+' km';
+  document.getElementById('distAvg').textContent = Math.round(totalDist/distDays)+' km';
+
+  // donut: cost split by type (always all-time, all types, regardless of pill — gives the full picture)
+  const costSumsByType = {};
+  allEntries.filter(e=>spendTypes.includes(e.type)).forEach(e=>{
+    costSumsByType[e.type] = (costSumsByType[e.type]||0) + e.amount;
+  });
+  renderDonut(costSumsByType);
+
+  // ---- legacy fuel-efficiency stats (refuel only, all-time) ----
+  let totalLiters=0, allSpentRefuel=0;
   const stationMap = {};
-  entries.forEach(e=>{
+  refuelAll.forEach(e=>{
     totalLiters += e.liters;
-    allSpent += e.total;
-    const d = entryDistance(e);
-    if(d && d>0) totalDistAll += d; // raw distance, used for cost/km — accurate regardless of partial fills
+    allSpentRefuel += e.amount;
     const st = (e.station||'Unspecified').trim() || 'Unspecified';
     if(!stationMap[st]) stationMap[st] = {total:0, liters:0, count:0};
-    stationMap[st].total += e.total;
+    stationMap[st].total += e.amount;
     stationMap[st].liters += e.liters;
     stationMap[st].count++;
   });
 
-  // km/L: full-tank-to-full-tank only, since partial fills can't isolate true consumption
-  const { kmlByEntryId, segments } = computeFullTankSegments(entries);
+  const { kmlByEntryId, segments } = computeFullTankSegments(allEntries);
   const avgKml = segments.length ? segments.reduce((s,seg)=>s+seg.kml,0)/segments.length : null;
   document.getElementById('statKml').textContent = avgKml ? avgKml.toFixed(1)+' km/L' : '–';
 
-  // trend: most recent segment vs the average of the rest
   if(segments.length >= 2){
     const latest = segments[segments.length-1].kml;
     const priorAvg = segments.slice(0,-1).reduce((s,seg)=>s+seg.kml,0) / (segments.length-1);
@@ -462,16 +720,14 @@ function renderAll(){
     document.getElementById('statKmlTrend').className = 'sub-trend flat';
   }
 
-  // cost per km — total spend / total distance actually driven (works fine even with partial fills)
-  const costPerKm = totalDistAll>0 ? (allSpent/totalDistAll) : null;
+  const costPerKm = totalDist>0 ? (allSpentRefuel/totalDist) : null;
   document.getElementById('statCostKm').textContent = costPerKm ? '₱'+costPerKm.toFixed(2) : '–';
 
-  // cost/km trend: last 3 fill-ups vs the 3 before that
-  const withDist = entries.map(e=>({...e, d: entryDistance(e)})).filter(e=>e.d && e.d>0);
+  const withDist = refuelAll.map(e=>({...e, d: entryDistance(e)})).filter(e=>e.d && e.d>0);
   if(withDist.length >= 4){
     const recent = withDist.slice(-3);
     const prior = withDist.slice(-6, -3);
-    const ratio = arr => arr.reduce((s,e)=>s+e.total,0) / arr.reduce((s,e)=>s+e.d,0);
+    const ratio = arr => arr.reduce((s,e)=>s+e.amount,0) / arr.reduce((s,e)=>s+e.d,0);
     if(prior.length){
       const t = trendArrow(ratio(recent), ratio(prior), true);
       document.getElementById('statCostKmTrend').textContent = t.text;
@@ -481,13 +737,13 @@ function renderAll(){
     document.getElementById('statCostKmTrend').textContent = '';
   }
 
-  document.getElementById('statAvgPrice').textContent = totalLiters>0 ? '₱'+(allSpent/totalLiters).toFixed(2) : '–';
-  document.getElementById('statTotalSpent').textContent = '₱' + allSpent.toLocaleString(undefined,{maximumFractionDigits:0});
+  document.getElementById('statAvgPrice').textContent = totalLiters>0 ? '₱'+(allSpentRefuel/totalLiters).toFixed(2) : '–';
+  document.getElementById('statTotalSpent').textContent = '₱' + allSpentRefuel.toLocaleString(undefined,{maximumFractionDigits:0});
 
   const stationList = document.getElementById('stationList');
   const stations = Object.entries(stationMap).sort((a,b)=> b[1].total - a[1].total);
   if(stations.length === 0){
-    stationList.innerHTML = '<div class="empty"><div class="big">⛽</div>No fill-ups yet</div>';
+    stationList.innerHTML = '<div class="empty"><div class="big">'+ICON_FUEL+'</div>No fill-ups yet</div>';
   } else {
     stationList.innerHTML = stations.map(([name, s])=>`
       <div class="list-row">
@@ -501,30 +757,81 @@ function renderAll(){
     `).join('');
   }
 
-  renderHistory(kmlByEntryId);
+  renderHistory(kmlByEntryId, filteredEntries);
+  renderReminders();
 }
 
-function renderHistory(kmlByEntryId){
+function renderHistory(kmlByEntryId, filteredEntries){
   kmlByEntryId = kmlByEntryId || computeFullTankSegments(getActiveEntries()).kmlByEntryId;
-  const entries = getActiveEntries().slice().reverse();
+  const entries = (filteredEntries || getActiveEntries()).slice().reverse();
   const list = document.getElementById('entryList');
   if(entries.length === 0){
-    list.innerHTML = '<div class="empty"><div class="big">⛽</div>No fill-ups logged yet.<br>Tap + to add one.</div>';
+    list.innerHTML = '<div class="empty"><div class="big">'+ICON_FUEL+'</div>No entries yet.<br>Tap + to add one.</div>';
     return;
   }
   list.innerHTML = entries.map(e=>{
-    const kml = kmlByEntryId[e.id];
-    const kmlText = kml ? kml.toFixed(1)+' km/L' : '';
-    const st = e.station || 'Fill-up';
-    const partialTag = e.fullTank ? '' : ' · Partial fill';
-    return `
-    <div class="list-row" onclick="openEntrySheet('${e.id}')" style="cursor:pointer;">
-      <div class="avatar" style="background:${stationColor(st)};">${st.slice(0,2).toUpperCase()}</div>
-      <div class="list-main">
-        <div class="list-title">${escapeHtml(st)}</div>
-        <div class="list-sub">${formatDate(e.date)} · ${e.liters}L @ ₱${e.price}/L${partialTag}</div>
+    const isIncome = e.type === 'income';
+    const icon = TYPE_ICON[e.type];
+    const color = TYPE_COLOR[e.type];
+    let title, sub;
+    if(e.type==='refuel'){
+      title = e.station || 'Fill-up';
+      const kml = kmlByEntryId[e.id];
+      const kmlText = kml ? kml.toFixed(1)+' km/L' : '';
+      const partialTag = e.fullTank ? '' : ' · Partial fill';
+      sub = `${formatDate(e.date)} · ${e.liters}L @ ₱${e.price}/L${partialTag}`;
+      return `<div class="list-row" onclick="openEntrySheet('${e.id}')" style="cursor:pointer;">
+        <div class="avatar" style="background:${color};">${icon}</div>
+        <div class="list-main"><div class="list-title">${escapeHtml(title)}</div><div class="list-sub">${sub}</div></div>
+        <div class="list-amt cost">₱${e.amount.toLocaleString(undefined,{maximumFractionDigits:0})}${kmlText?`<span class="kml">${kmlText}</span>`:''}</div>
+      </div>`;
+    } else {
+      title = e.category || (e.type==='income' ? 'Income' : 'Expense');
+      sub = `${formatDate(e.date)}${e.note?' · '+escapeHtml(e.note):''}`;
+      return `<div class="list-row" onclick="openEntrySheet('${e.id}')" style="cursor:pointer;">
+        <div class="avatar" style="background:${color};">${icon}</div>
+        <div class="list-main"><div class="list-title">${escapeHtml(title)}</div><div class="list-sub">${sub}</div></div>
+        <div class="list-amt ${isIncome?'income':'cost'}">${isIncome?'+':''}₱${e.amount.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+      </div>`;
+    }
+  }).join('');
+}
+
+function renderReminders(){
+  const list = document.getElementById('reminderList');
+  const reminders = getActiveReminders();
+  const odo = latestOdo();
+  const now = Date.now();
+
+  if(reminders.length === 0){
+    list.innerHTML = '<div class="empty"><div class="big">'+ICON_CLOCK+'</div>No reminders yet.<br>Tap + while on the Reminders tab to add one.</div>';
+    return;
+  }
+
+  const withInfo = reminders.map(r=>{
+    const dDays = r.date ? Math.round((new Date(r.date+'T00:00:00').getTime()-now)/86400000) : null;
+    const dKm = (r.km!=null && odo!=null) ? r.km - odo : null;
+    return {...r, dDays, dKm};
+  }).sort((a,b)=>{
+    const av = a.dDays ?? Infinity, bv = b.dDays ?? Infinity;
+    return av-bv;
+  });
+
+  list.innerHTML = withInfo.map(r=>{
+    const isDue = (r.dDays!=null && r.dDays<=3) || (r.dKm!=null && r.dKm<=200);
+    let metaParts = [];
+    if(r.date) metaParts.push(formatDate(r.date));
+    if(r.km!=null) metaParts.push(r.km.toLocaleString()+' km');
+    let whenParts = [];
+    if(r.dDays!=null) whenParts.push(r.dDays<0 ? `${Math.abs(r.dDays)}d overdue` : `In ${r.dDays} days`);
+    if(r.dKm!=null) whenParts.push(r.dKm<0 ? `${Math.abs(r.dKm)} km overdue` : `In ${r.dKm} km`);
+    return `<div class="reminder-row" onclick="openReminderSheet('${r.id}')">
+      <div class="reminder-icon-wrap">${r.type==='service'?ICON_WRENCH:ICON_RECEIPT}</div>
+      <div class="reminder-main">
+        <div class="reminder-title">${escapeHtml(r.title)}</div>
+        <div class="reminder-meta">${metaParts.map(m=>`<span>${m}</span>`).join('')}</div>
       </div>
-      <div class="list-amt">₱${e.total.toLocaleString(undefined,{maximumFractionDigits:0})}${kmlText?`<span class="kml">${kmlText}</span>`:''}</div>
+      <div class="reminder-when ${isDue?'due':'ok'}">${whenParts.join('<br>')}</div>
     </div>`;
   }).join('');
 }
@@ -534,13 +841,16 @@ function formatDate(s){
   return d.toLocaleDateString('en-PH', {month:'short', day:'numeric', year:'numeric'});
 }
 function escapeHtml(s){
-  return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 function switchTab(tab){
   document.querySelectorAll('.tabbar .tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
   document.getElementById('dashboard').style.display = tab==='dashboard' ? 'block':'none';
   document.getElementById('history').style.display = tab==='history' ? 'block':'none';
+  document.getElementById('reminders').style.display = tab==='reminders' ? 'block':'none';
+  document.getElementById('typeFilters').style.display = tab==='reminders' ? 'none' : 'flex';
+  document.getElementById('fab').onclick = tab==='reminders' ? ()=>openReminderSheet() : ()=>openEntrySheet();
 }
 
 function setDistanceMode(mode){
@@ -551,30 +861,55 @@ function setDistanceMode(mode){
   document.getElementById('distFields').style.display = mode==='dist' ? 'block':'none';
 }
 
-function openEntrySheet(entryId){
+function setEntryType(type){
+  entryType = type;
+  document.querySelectorAll('#entryTypeToggle .toggle-btn').forEach(b=>b.classList.toggle('active', b.dataset.et===type));
+  document.getElementById('fieldsRefuel').style.display = type==='refuel' ? 'block':'none';
+  document.getElementById('fieldsExpense').style.display = type==='expense' ? 'block':'none';
+  document.getElementById('fieldsService').style.display = type==='service' ? 'block':'none';
+  document.getElementById('fieldsIncome').style.display = type==='income' ? 'block':'none';
+}
+
+function openEntrySheet(entryId, presetType){
   editingEntryId = entryId || null;
   document.getElementById('deleteBtn').style.display = entryId ? 'block' : 'none';
-  document.getElementById('entryTitle').textContent = entryId ? 'Edit fuel log' : 'New fuel log';
+  document.getElementById('entryTitle').textContent = entryId ? 'Edit entry' : 'New entry';
 
   if(entryId){
     const e = data.entries.find(x=>x.id===entryId);
     document.getElementById('f_date').value = e.date;
-    document.getElementById('f_liters').value = e.liters;
-    document.getElementById('f_price').value = e.price;
-    document.getElementById('f_total').value = e.total;
-    document.getElementById('f_station').value = e.station || '';
-    document.getElementById('f_full').checked = e.fullTank;
-    setDistanceMode(e.distMode);
-    if(e.distMode==='odo') document.getElementById('f_odo').value = e.odo ?? '';
-    else document.getElementById('f_dist').value = e.distance ?? '';
+    setEntryType(e.type);
+    if(e.type==='refuel'){
+      document.getElementById('f_liters').value = e.liters;
+      document.getElementById('f_price').value = e.price;
+      document.getElementById('f_total').value = e.amount;
+      document.getElementById('f_station').value = e.station || '';
+      document.getElementById('f_full').checked = e.fullTank;
+      setDistanceMode(e.distMode);
+      if(e.distMode==='odo') document.getElementById('f_odo').value = e.odo ?? '';
+      else document.getElementById('f_dist').value = e.distance ?? '';
+    } else if(e.type==='expense'){
+      document.getElementById('f_exp_cat').value = e.category || 'Other';
+      document.getElementById('f_exp_amt').value = e.amount;
+      document.getElementById('f_exp_note').value = e.note || '';
+      document.getElementById('f_exp_odo').value = e.odo ?? '';
+    } else if(e.type==='service'){
+      document.getElementById('f_svc_cat').value = e.category || 'Other';
+      document.getElementById('f_svc_amt').value = e.amount;
+      document.getElementById('f_svc_note').value = e.note || '';
+      document.getElementById('f_svc_odo').value = e.odo ?? '';
+    } else if(e.type==='income'){
+      document.getElementById('f_inc_amt').value = e.amount;
+      document.getElementById('f_inc_note').value = e.note || '';
+      document.getElementById('f_inc_odo').value = e.odo ?? '';
+    }
   } else {
+    setEntryType(presetType || (typeFilter!=='all' ? typeFilter : 'refuel'));
     document.getElementById('f_date').value = new Date().toISOString().slice(0,10);
-    document.getElementById('f_liters').value = '';
-    document.getElementById('f_price').value = '';
-    document.getElementById('f_total').value = '';
-    document.getElementById('f_station').value = '';
-    document.getElementById('f_odo').value = '';
-    document.getElementById('f_dist').value = '';
+    ['f_liters','f_price','f_total','f_station','f_odo','f_dist','f_exp_amt','f_exp_note','f_exp_odo',
+     'f_svc_amt','f_svc_note','f_svc_odo','f_inc_amt','f_inc_note','f_inc_odo'].forEach(id=>{
+      const el = document.getElementById(id); if(el) el.value='';
+    });
     document.getElementById('f_full').checked = true;
     setDistanceMode('odo');
   }
@@ -591,17 +926,9 @@ function attachAutoCalc(){
   const total = document.getElementById('f_total');
   let lastEdited = null;
 
-  liters.addEventListener('input', ()=>{
-    recalc('liters');
-  });
-  price.addEventListener('input', ()=>{
-    lastEdited = 'price';
-    recalc('price');
-  });
-  total.addEventListener('input', ()=>{
-    lastEdited = 'total';
-    recalc('total');
-  });
+  liters.addEventListener('input', ()=> recalc('liters'));
+  price.addEventListener('input', ()=>{ lastEdited='price'; recalc('price'); });
+  total.addEventListener('input', ()=>{ lastEdited='total'; recalc('total'); });
 
   function recalc(changed){
     const l = parseFloat(liters.value);
@@ -609,7 +936,6 @@ function attachAutoCalc(){
     const t = parseFloat(total.value);
 
     if(changed === 'liters'){
-      // prefer recomputing whichever of price/total was NOT the most recently hand-typed one
       if(lastEdited === 'total' && !isNaN(l) && !isNaN(t) && l>0){
         price.value = (t/l).toFixed(2);
       } else if(!isNaN(l) && !isNaN(p)){
@@ -627,29 +953,49 @@ function attachAutoCalc(){
 
 function saveEntry(){
   const date = document.getElementById('f_date').value;
-  const liters = parseFloat(document.getElementById('f_liters').value);
-  const price = parseFloat(document.getElementById('f_price').value);
-  let total = parseFloat(document.getElementById('f_total').value);
-  const station = document.getElementById('f_station').value.trim();
-  const fullTank = document.getElementById('f_full').checked;
+  if(!date){ alert('Please pick a date.'); return; }
 
-  if(!date || isNaN(liters) || liters<=0){ alert('Please enter at least a date and liters.'); return; }
-  if(isNaN(total)) total = (liters * (price||0));
+  let entry;
+  if(entryType === 'refuel'){
+    const liters = parseFloat(document.getElementById('f_liters').value);
+    const price = parseFloat(document.getElementById('f_price').value);
+    let total = parseFloat(document.getElementById('f_total').value);
+    const station = document.getElementById('f_station').value.trim();
+    const fullTank = document.getElementById('f_full').checked;
+    if(isNaN(liters) || liters<=0){ alert('Please enter liters.'); return; }
+    if(isNaN(total)) total = (liters * (price||0));
 
-  let odo = null, distance = null;
-  if(distanceMode === 'odo'){
-    odo = parseFloat(document.getElementById('f_odo').value);
-    if(isNaN(odo)) odo = null;
-  } else {
-    distance = parseFloat(document.getElementById('f_dist').value);
-    if(isNaN(distance)) distance = null;
+    let odo=null, distance=null;
+    if(distanceMode==='odo'){ odo=parseFloat(document.getElementById('f_odo').value); if(isNaN(odo)) odo=null; }
+    else { distance=parseFloat(document.getElementById('f_dist').value); if(isNaN(distance)) distance=null; }
+
+    entry = { id: editingEntryId||uid(), vehicleId:data.activeVehicleId, type:'refuel',
+      date, liters, price: isNaN(price)?0:price, amount: total, station, fullTank,
+      distMode: distanceMode, odo, distance };
+
+  } else if(entryType === 'expense'){
+    const amount = parseFloat(document.getElementById('f_exp_amt').value);
+    if(isNaN(amount) || amount<=0){ alert('Please enter an amount.'); return; }
+    const odoVal = parseFloat(document.getElementById('f_exp_odo').value);
+    entry = { id: editingEntryId||uid(), vehicleId:data.activeVehicleId, type:'expense', date,
+      category: document.getElementById('f_exp_cat').value, amount,
+      note: document.getElementById('f_exp_note').value.trim(), odo: isNaN(odoVal)?null:odoVal };
+
+  } else if(entryType === 'service'){
+    const amount = parseFloat(document.getElementById('f_svc_amt').value);
+    if(isNaN(amount) || amount<=0){ alert('Please enter an amount.'); return; }
+    const odoVal = parseFloat(document.getElementById('f_svc_odo').value);
+    entry = { id: editingEntryId||uid(), vehicleId:data.activeVehicleId, type:'service', date,
+      category: document.getElementById('f_svc_cat').value, amount,
+      note: document.getElementById('f_svc_note').value.trim(), odo: isNaN(odoVal)?null:odoVal };
+
+  } else if(entryType === 'income'){
+    const amount = parseFloat(document.getElementById('f_inc_amt').value);
+    if(isNaN(amount) || amount<=0){ alert('Please enter an amount.'); return; }
+    const odoVal = parseFloat(document.getElementById('f_inc_odo').value);
+    entry = { id: editingEntryId||uid(), vehicleId:data.activeVehicleId, type:'income', date,
+      amount, note: document.getElementById('f_inc_note').value.trim(), odo: isNaN(odoVal)?null:odoVal };
   }
-
-  const entry = {
-    id: editingEntryId || uid(), vehicleId: data.activeVehicleId,
-    date, liters, price: isNaN(price)?0:price, total, station, fullTank,
-    distMode: distanceMode, odo, distance
-  };
 
   if(editingEntryId){
     const idx = data.entries.findIndex(x=>x.id===editingEntryId);
@@ -664,7 +1010,7 @@ function saveEntry(){
 
 function deleteEntry(){
   if(!editingEntryId) return;
-  if(!confirm('Delete this fill-up entry?')) return;
+  if(!confirm('Delete this entry?')) return;
   data.entries = data.entries.filter(x=>x.id!==editingEntryId);
   saveData();
   closeEntrySheet();
@@ -715,13 +1061,74 @@ function saveVehicle(){
 function deleteVehicle(){
   if(data.vehicles.length <= 1){ alert("You need at least one vehicle."); return; }
   const v = data.vehicles.find(x=>x.id===data.activeVehicleId);
-  if(!confirm(`Delete "${v.name}" and all its fill-up history? This cannot be undone.`)) return;
+  if(!confirm(`Delete "${v.name}" and all its history? This cannot be undone.`)) return;
   data.entries = data.entries.filter(e=>e.vehicleId !== data.activeVehicleId);
+  data.reminders = data.reminders.filter(r=>r.vehicleId !== data.activeVehicleId);
   data.vehicles = data.vehicles.filter(x=>x.id !== data.activeVehicleId);
   data.activeVehicleId = data.vehicles[0].id;
   saveData();
   closeVehicleSheet();
   renderVehicles();
+  renderAll();
+}
+
+function setReminderType(type){
+  reminderType = type;
+  document.getElementById('rTypeBill').classList.toggle('active', type==='bill');
+  document.getElementById('rTypeService').classList.toggle('active', type==='service');
+}
+
+function openReminderSheet(reminderId){
+  editingReminderId = reminderId || null;
+  document.getElementById('reminderDeleteBtn').style.display = reminderId ? 'block' : 'none';
+  document.getElementById('reminderSheetTitle').textContent = reminderId ? 'Edit reminder' : 'New reminder';
+
+  if(reminderId){
+    const r = data.reminders.find(x=>x.id===reminderId);
+    setReminderType(r.type);
+    document.getElementById('r_title').value = r.title;
+    document.getElementById('r_date').value = r.date || '';
+    document.getElementById('r_km').value = r.km ?? '';
+  } else {
+    setReminderType('bill');
+    document.getElementById('r_title').value = '';
+    document.getElementById('r_date').value = '';
+    document.getElementById('r_km').value = '';
+  }
+  document.getElementById('reminderOverlay').classList.add('show');
+}
+function closeReminderSheet(){
+  document.getElementById('reminderOverlay').classList.remove('show');
+  editingReminderId = null;
+}
+
+function saveReminder(){
+  const title = document.getElementById('r_title').value.trim();
+  const date = document.getElementById('r_date').value;
+  const kmVal = parseFloat(document.getElementById('r_km').value);
+  if(!title){ alert('Please enter a title.'); return; }
+  if(!date && isNaN(kmVal)){ alert('Please set a due date or a due odometer reading.'); return; }
+
+  const reminder = { id: editingReminderId||uid(), vehicleId:data.activeVehicleId,
+    type:reminderType, title, date: date||null, km: isNaN(kmVal)?null:kmVal };
+
+  if(editingReminderId){
+    const idx = data.reminders.findIndex(x=>x.id===editingReminderId);
+    data.reminders[idx] = reminder;
+  } else {
+    data.reminders.push(reminder);
+  }
+  saveData();
+  closeReminderSheet();
+  renderAll();
+}
+
+function deleteReminder(){
+  if(!editingReminderId) return;
+  if(!confirm('Delete this reminder?')) return;
+  data.reminders = data.reminders.filter(x=>x.id!==editingReminderId);
+  saveData();
+  closeReminderSheet();
   renderAll();
 }
 
