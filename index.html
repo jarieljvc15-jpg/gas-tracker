@@ -1,331 +1,526 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Fuel Log</title>
-<link rel="manifest" href="manifest.json" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Fuel Log" />
-<meta name="theme-color" content="#15171c" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>Fuel Tracker</title>
 <style>
   :root{
-    --bg:#15171c; --card:#1c1f26; --border:rgba(255,255,255,0.07);
-    --text:#e8e6e1; --muted:#8a8d96; --faint:#6e7178;
-    --accent:#ff8c42; --accent-text:#15171c; --good:#5ec9a8; --bad:#e0625c;
+    --bg:#aed0ec;
+    --bg-deep:#9ec4e8;
+    --card:#ffffff;
+    --ink:#15192b;
+    --muted:#8a93a6;
+    --line:#eef1f6;
+    --yellow:#f6d650;
+    --yellow-dark:#e8c328;
+    --pill:#eef4fb;
+    --danger:#e0563f;
+    --chip1:#1f6feb; --chip2:#16a34a; --chip3:#ea580c; --chip4:#7c3aed; --chip5:#dc2626; --chip6:#0891b2;
   }
-  *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;-webkit-tap-highlight-color:transparent;}
-  .mono{font-family:'JetBrains Mono',monospace;}
-  .wrap{max-width:480px;margin:0 auto;padding-bottom:120px;}
-  header{padding:32px 20px 24px;border-bottom:1px solid var(--border);}
-  header .row{display:flex;align-items:center;justify-content:space-between;}
-  .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);margin:0 0 4px;}
-  h1{font-size:24px;font-weight:800;margin:0;letter-spacing:-0.02em;}
-  .gauge-wrap{width:80px;height:48px;position:relative;}
-  .gauge-wrap svg{width:100%;height:100%;overflow:visible;}
-  .needle{transform-origin:50px 50px;transition:transform .6s ease;filter:drop-shadow(0 0 6px rgba(255,140,66,.55));}
-  .gauge-label{position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:10px;color:var(--muted);}
-  main{padding:24px 20px;}
-  .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
-  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;}
-  .stat-card .label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:8px;}
-  .stat-card.accent .label{color:var(--good);}
-  .stat-card .value{font-size:18px;font-weight:700;}
-  .stat-card .sub{font-size:11px;color:var(--faint);margin-top:2px;}
-  .empty{text-align:center;padding:56px 16px;border:1px dashed var(--border);border-radius:16px;}
-  .empty svg{margin-bottom:12px;color:var(--accent);}
-  .empty p:first-of-type{font-size:14px;color:#c8c6c1;margin:0 0 4px;}
-  .empty p:last-of-type{font-size:12px;color:var(--muted);margin:0;}
-  .section-label{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);margin:0 0 12px;}
-  .entry{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-  .entry .top{display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap;}
-  .entry .cost{font-size:14px;font-weight:600;}
-  .entry .date{font-size:12px;color:var(--faint);}
-  .badge{font-size:10px;padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.05);color:var(--muted);}
-  .entry .meta{display:flex;gap:12px;font-size:12px;color:var(--muted);}
-  .entry .meta .kml{color:var(--good);}
-  .entry .station{display:flex;align-items:center;gap:4px;margin-top:4px;font-size:12px;color:var(--faint);}
-  .entry .station svg{flex-shrink:0;}
-  .del-btn{background:none;border:none;color:var(--faint);padding:8px;cursor:pointer;}
-  .del-btn:hover{color:var(--bad);}
-  .fab{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:var(--accent);color:var(--accent-text);font-weight:600;font-size:15px;padding:14px 22px;border-radius:999px;border:none;box-shadow:0 4px 20px rgba(255,140,66,.35);cursor:pointer;}
-  .fab:active{transform:translateX(-50%) scale(.96);}
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;z-index:50;}
-  @media(min-width:600px){.overlay{align-items:center;}}
-  .modal{background:var(--card);width:100%;max-width:400px;border-radius:24px 24px 0 0;border-top:1px solid var(--border);padding:24px;max-height:90vh;overflow-y:auto;}
-  @media(min-width:600px){.modal{border-radius:16px;border:1px solid var(--border);}}
-  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
-  .modal-head h2{font-size:18px;font-weight:700;margin:0;}
-  .close-btn{background:none;border:none;color:var(--muted);padding:4px;cursor:pointer;}
-  .field{margin-bottom:14px;}
-  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;}
-  .field input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-size:14px;color:var(--text);outline:none;}
-  .field input:focus{border-color:var(--accent);}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-  .checkrow{display:flex;align-items:center;gap:10px;padding:4px 0 2px;cursor:pointer;}
-  .checkrow input{width:16px;height:16px;accent-color:var(--accent);}
-  .hint{font-size:11px;color:var(--faint);margin:-8px 0 14px;}
-  .error{font-size:12px;color:var(--bad);margin:0 0 12px;}
-  .submit-btn{width:100%;background:var(--accent);color:var(--accent-text);font-weight:600;font-size:15px;padding:13px;border:none;border-radius:12px;cursor:pointer;}
-  .submit-btn:active{transform:scale(.98);}
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    background-image:radial-gradient(circle at 100% 0%, var(--bg-deep), transparent 60%);
+    color:var(--ink); padding-bottom:100px; min-height:100vh;
+  }
+  .screen{max-width:520px; margin:0 auto; padding:18px 16px 0;}
+
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
+  .circle-btn{
+    width:42px; height:42px; border-radius:50%; background:#fff; border:none;
+    display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--ink);
+    box-shadow:0 2px 6px rgba(15,23,42,.08); cursor:pointer;
+  }
+  .topbar h1{font-size:22px; font-weight:800; margin:0;}
+
+  .vehicle-scroll{display:flex; gap:8px; overflow-x:auto; margin-bottom:16px; padding-bottom:2px;}
+  .vehicle-pill{
+    flex:0 0 auto; padding:9px 16px; border-radius:999px; background:#fff; color:var(--ink);
+    font-size:13px; font-weight:700; cursor:pointer; box-shadow:0 2px 6px rgba(15,23,42,.06); white-space:nowrap;
+  }
+  .vehicle-pill.active{background:var(--ink); color:#fff;}
+  .vehicle-pill.add{background:var(--yellow); color:var(--ink);}
+
+  .hero-card{
+    background:#fff; border-radius:26px; padding:20px; margin-bottom:16px;
+    box-shadow:0 8px 24px rgba(15,40,80,.12);
+  }
+  .range-tabs{display:flex; gap:6px; background:var(--pill); border-radius:999px; padding:4px; margin-bottom:16px;}
+  .range-tab{flex:1; text-align:center; padding:8px 0; border-radius:999px; font-size:12px; font-weight:700; color:var(--muted); cursor:pointer;}
+  .range-tab.active{background:var(--ink); color:#fff;}
+
+  .hero-period{font-size:12px; color:var(--muted); font-weight:600; margin-bottom:4px;}
+  .hero-amount{font-size:34px; font-weight:800; margin-bottom:18px; letter-spacing:-.5px;}
+
+  .bars{display:flex; align-items:flex-end; gap:10px; height:150px; margin-bottom:10px;}
+  .bar-col{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; position:relative;}
+  .bar{
+    width:100%; max-width:34px; border-radius:10px 10px 6px 6px; background:#dbeafd;
+    position:relative; transition:height .25s ease;
+  }
+  .bar.peak{background:repeating-linear-gradient(135deg, var(--ink), var(--ink) 4px, #2a3142 4px, #2a3142 8px);}
+  .bar-amt{position:absolute; top:-20px; font-size:10px; font-weight:700; color:var(--ink); white-space:nowrap;}
+  .bar-label{font-size:11px; color:var(--muted); font-weight:600; margin-top:8px;}
+
+  .section-title{font-size:13px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin:18px 0 10px;}
+
+  .card{background:#fff; border-radius:20px; padding:6px 16px; margin-bottom:16px; box-shadow:0 4px 16px rgba(15,40,80,.08);}
+
+  .list-row{display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid var(--line);}
+  .list-row:last-child{border-bottom:none;}
+  .avatar{
+    width:42px; height:42px; border-radius:50%; flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:800; font-size:14px;
+  }
+  .list-main{flex:1; min-width:0;}
+  .list-title{font-size:14px; font-weight:700;}
+  .list-sub{font-size:12px; color:var(--muted); margin-top:1px;}
+  .list-amt{font-weight:800; font-size:14px; text-align:right; white-space:nowrap;}
+  .list-amt .kml{display:block; font-size:11px; color:#16a34a; font-weight:700; margin-top:2px;}
+
+  .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;}
+  .stat-card{background:#fff; border-radius:18px; padding:14px; box-shadow:0 4px 16px rgba(15,40,80,.08);}
+  .stat-card .label{font-size:11px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.03em;}
+  .stat-card .value{font-size:19px; font-weight:800; margin-top:4px;}
+
+  .empty{text-align:center; color:var(--muted); padding:26px 10px; font-size:13px;}
+  .empty .big{font-size:30px; margin-bottom:6px;}
+
+  .fab{
+    position:fixed; right:18px; bottom:22px; width:60px; height:60px; border-radius:50%;
+    background:var(--yellow); color:var(--ink); font-size:28px; border:none;
+    box-shadow:0 8px 20px rgba(232,195,40,.5); cursor:pointer; z-index:20; line-height:0; font-weight:800;
+  }
+
+  .sheet-overlay{position:fixed; inset:0; background:rgba(15,23,42,.45); display:none; z-index:30; align-items:flex-end; justify-content:center;}
+  .sheet-overlay.show{display:flex;}
+  .sheet{background:#fff; width:100%; max-width:520px; border-radius:26px 26px 0 0; padding:18px 18px 26px; max-height:88vh; overflow-y:auto; animation:slideUp .22s ease-out;}
+  @keyframes slideUp{from{transform:translateY(30px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  .sheet h3{margin:0 0 16px; font-size:18px; font-weight:800;}
+  .sheet-close{width:36px; height:4px; background:var(--line); border-radius:2px; margin:0 auto 16px;}
+
+  .field{margin-bottom:12px;}
+  .field label{display:block; font-size:11px; font-weight:700; color:var(--muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:.03em;}
+  .field input{width:100%; padding:13px 14px; border-radius:14px; border:none; background:var(--pill); font-size:15px; color:var(--ink);}
+  .field input:focus{outline:2px solid var(--ink);}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .toggle-group{display:flex; gap:8px; margin-bottom:14px;}
+  .toggle-btn{flex:1; padding:10px; text-align:center; border-radius:14px; font-size:12.5px; font-weight:700; color:var(--muted); cursor:pointer; background:var(--pill);}
+  .toggle-btn.active{background:var(--ink); color:#fff;}
+  .checkbox-row{display:flex; align-items:center; gap:9px; margin-bottom:16px; background:var(--pill); padding:12px 14px; border-radius:14px;}
+  .checkbox-row input{width:18px; height:18px;}
+  .checkbox-row label{font-size:14px; font-weight:700; margin:0;}
+  .computed-note{font-size:12px; color:#16a34a; background:#ecfdf5; padding:9px 12px; border-radius:12px; margin-bottom:12px; font-weight:700;}
+
+  .btn{width:100%; padding:15px; border-radius:16px; border:none; font-size:15px; font-weight:800; cursor:pointer;}
+  .btn-primary{background:var(--yellow); color:var(--ink);}
+  .btn-secondary{background:var(--pill); color:var(--ink); margin-top:8px;}
+  .btn-danger{background:#fdeeea; color:var(--danger); margin-top:8px;}
+
+  .tabbar{display:flex; gap:8px; background:#fff; border-radius:999px; padding:4px; margin-bottom:16px; box-shadow:0 4px 14px rgba(15,40,80,.08);}
+  .tabbar .tab{flex:1; text-align:center; padding:10px 0; border-radius:999px; font-size:13px; font-weight:700; color:var(--muted); cursor:pointer;}
+  .tabbar .tab.active{background:var(--ink); color:#fff;}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="row">
-      <div>
-        <p class="eyebrow">Fuel Log</p>
-        <h1>My Car</h1>
-      </div>
-      <div class="gauge-wrap">
-        <svg viewBox="0 0 100 55">
-          <path d="M 8 50 A 42 42 0 0 1 92 50" fill="none" stroke="#2a2d35" stroke-width="6" stroke-linecap="round"/>
-          <path id="gaugeFill" d="M 8 50 A 42 42 0 0 1 92 50" fill="none" stroke="#ff8c42" stroke-width="6" stroke-linecap="round" stroke-dasharray="0 132" opacity="0.85"/>
-          <g id="needle" class="needle">
-            <line x1="50" y1="50" x2="50" y2="14" stroke="#ff8c42" stroke-width="2.5" stroke-linecap="round"/>
-          </g>
-          <circle cx="50" cy="50" r="3.5" fill="#ff8c42"/>
-        </svg>
-        <div class="gauge-label" id="gaugeLabel">—</div>
-      </div>
-    </div>
-  </header>
 
-  <main>
-    <div class="stats" id="stats" style="display:none;">
-      <div class="stat-card">
-        <div class="label">📅 This month</div>
-        <div class="value" id="monthSpend">—</div>
-        <div class="sub" id="monthLiters"></div>
+<div class="screen">
+  <div class="topbar">
+    <button class="circle-btn" onclick="switchTab('dashboard')">⛽</button>
+    <h1>Fuel Tracker</h1>
+    <button class="circle-btn" onclick="openVehicleSheet()">＋</button>
+  </div>
+
+  <div class="vehicle-scroll" id="vehicleRow"></div>
+
+  <div class="tabbar">
+    <div class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">Analytics</div>
+    <div class="tab" data-tab="history" onclick="switchTab('history')">History</div>
+  </div>
+
+  <div id="dashboard">
+    <div class="hero-card">
+      <div class="range-tabs">
+        <div class="range-tab" data-range="3" onclick="setRange(3)">3M</div>
+        <div class="range-tab active" data-range="6" onclick="setRange(6)">6M</div>
+        <div class="range-tab" data-range="12" onclick="setRange(12)">12M</div>
+        <div class="range-tab" data-range="999" onclick="setRange(999)">All</div>
       </div>
-      <div class="stat-card accent">
-        <div class="label">📈 Avg efficiency</div>
-        <div class="value" id="avgKml">—</div>
-        <div class="sub" id="entryCount"></div>
-      </div>
+      <div class="hero-period" id="heroPeriod">Total spent</div>
+      <div class="hero-amount" id="heroAmount">₱0</div>
+      <div class="bars" id="bars"></div>
     </div>
 
-    <div class="empty" id="emptyState">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 22h12M9 22V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v18M9 9h6M19 7l-3-3 1.5-1.5L21 6v9a1.5 1.5 0 0 1-3 0V9"/></svg>
-      <p>No fill-ups yet</p>
-      <p>Log your first one to start tracking spend and efficiency.</p>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="label">Avg km/L</div><div class="value" id="statKml">–</div></div>
+      <div class="stat-card"><div class="label">Avg Price/L</div><div class="value" id="statAvgPrice">–</div></div>
     </div>
 
-    <div id="historySection" style="display:none;">
-      <p class="section-label">History</p>
-      <div id="entryList"></div>
-    </div>
-  </main>
+    <div class="section-title">Spending by Station</div>
+    <div class="card"><div id="stationList"></div></div>
+  </div>
+
+  <div id="history" style="display:none;">
+    <div class="section-title">Fill-up History</div>
+    <div class="card"><div id="entryList"></div></div>
+  </div>
 </div>
 
-<button class="fab" onclick="openForm()">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-  Log fill-up
-</button>
+<button class="fab" onclick="openEntrySheet()">＋</button>
 
-<div class="overlay" id="overlay" style="display:none;">
-  <form class="modal" id="form" onsubmit="submitForm(event)">
-    <div class="modal-head">
-      <h2>Log fill-up</h2>
-      <button type="button" class="close-btn" onclick="closeForm()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
+<!-- Add/Edit Entry Sheet -->
+<div class="sheet-overlay" id="entryOverlay">
+  <div class="sheet">
+    <div class="sheet-close"></div>
+    <h3 id="entryTitle">New fuel log</h3>
+
+    <div class="field"><label>Date</label><input type="date" id="f_date"></div>
+
+    <div class="toggle-group">
+      <div class="toggle-btn active" id="modeOdo" onclick="setDistanceMode('odo')">I have odometer</div>
+      <div class="toggle-btn" id="modeDist" onclick="setDistanceMode('dist')">I only know km traveled</div>
     </div>
 
-    <div class="field">
-      <label>Date</label>
-      <input type="date" id="f-date" />
+    <div id="odoFields">
+      <div class="field"><label>Odometer Reading (km)</label><input type="number" id="f_odo" inputmode="decimal" placeholder="e.g. 45230"></div>
     </div>
-    <div class="field">
-      <label>Odometer (km)</label>
-      <input type="number" inputmode="decimal" id="f-odo" placeholder="e.g. 45230" />
+    <div id="distFields" style="display:none;">
+      <div class="field"><label>Km traveled since last fill-up</label><input type="number" id="f_dist" inputmode="decimal" placeholder="e.g. 320"></div>
     </div>
-    <div class="grid2">
-      <div class="field">
-        <label>Liters</label>
-        <input type="number" inputmode="decimal" step="0.01" id="f-liters" placeholder="0.00" />
-      </div>
-      <div class="field">
-        <label>Cost (₱)</label>
-        <input type="number" inputmode="decimal" step="0.01" id="f-cost" placeholder="0.00" />
-      </div>
+
+    <div class="row2">
+      <div class="field"><label>Liters</label><input type="number" id="f_liters" inputmode="decimal" placeholder="e.g. 30.5"></div>
+      <div class="field"><label>Price / Liter (₱)</label><input type="number" id="f_price" inputmode="decimal" placeholder="e.g. 74.20"></div>
     </div>
-    <div class="field">
-      <label>Gas station (optional)</label>
-      <input type="text" id="f-station" placeholder="e.g. Shell Aguinaldo Hwy" />
+
+    <div class="field"><label>Total Cost (₱) — auto-filled, editable</label><input type="number" id="f_total" inputmode="decimal" placeholder="0.00"></div>
+    <div class="field"><label>Station (optional)</label><input type="text" id="f_station" placeholder="e.g. Petron, Shell, Caltex"></div>
+
+    <div class="checkbox-row">
+      <input type="checkbox" id="f_full" checked>
+      <label for="f_full">Full tank</label>
     </div>
-    <label class="checkrow">
-      <input type="checkbox" id="f-full" checked />
-      <span style="font-size:14px;color:#c8c6c1;">Filled to full tank</span>
-    </label>
-    <p class="hint">Efficiency (km/L) is calculated between full-tank fill-ups, so toggle this off for partial top-ups.</p>
-    <p class="error" id="formError" style="display:none;"></p>
-    <button type="submit" class="submit-btn">Save fill-up</button>
-  </form>
+
+    <button class="btn btn-primary" onclick="saveEntry()">Save Fill-up</button>
+    <button class="btn btn-secondary" onclick="closeEntrySheet()">Cancel</button>
+    <button class="btn btn-danger" id="deleteBtn" style="display:none;" onclick="deleteEntry()">Delete Entry</button>
+  </div>
+</div>
+
+<!-- Add Vehicle Sheet -->
+<div class="sheet-overlay" id="vehicleOverlay">
+  <div class="sheet">
+    <div class="sheet-close"></div>
+    <h3>Add Vehicle</h3>
+    <div class="field"><label>Vehicle Name</label><input type="text" id="v_name" placeholder="e.g. Vios, Click 125i, Hilux"></div>
+    <button class="btn btn-primary" onclick="saveVehicle()">Add Vehicle</button>
+    <button class="btn btn-secondary" onclick="closeVehicleSheet()">Cancel</button>
+  </div>
 </div>
 
 <script>
-const STORAGE_KEY = 'fuel_entries_v1';
+const STORAGE_KEY = 'fueltracker_data_v1';
+const CHIP_COLORS = ['#1f6feb','#16a34a','#ea580c','#7c3aed','#dc2626','#0891b2','#ca8a04','#db2777'];
 
-function loadEntries(){
-  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }catch(e){ return []; }
+function loadData(){
+  try{ const raw = localStorage.getItem(STORAGE_KEY); if(raw) return JSON.parse(raw); }catch(e){}
+  return { vehicles: [], activeVehicleId: null, entries: [] };
 }
-function saveEntries(entries){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
-}
+function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+let data = loadData();
+let editingEntryId = null;
+let distanceMode = 'odo';
+let currentRange = 6;
+
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
-function fmtMoney(n){ return '₱' + Number(n).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function fmtDate(iso){
-  const d = new Date(iso + 'T00:00:00');
-  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-}
 
-let entries = loadEntries();
-
-function computeEfficiency(sortedByOdo){
-  let lastFullOdo = null;
-  return sortedByOdo.map(e=>{
-    let kml = null;
-    if(lastFullOdo !== null && e.odometer > lastFullOdo){
-      kml = (e.odometer - lastFullOdo) / e.liters;
-    }
-    if(e.full) lastFullOdo = e.odometer;
-    return {...e, kml};
-  });
-}
-
-function render(){
-  const sorted = [...entries].sort((a,b)=> a.odometer - b.odometer);
-  const withEff = computeEfficiency(sorted);
-  const display = [...withEff].sort((a,b)=> b.odometer - a.odometer);
-
-  // stats
-  const statsEl = document.getElementById('stats');
-  const emptyEl = document.getElementById('emptyState');
-  const historyEl = document.getElementById('historySection');
-  const listEl = document.getElementById('entryList');
-
-  if(entries.length === 0){
-    statsEl.style.display = 'none';
-    emptyEl.style.display = 'block';
-    historyEl.style.display = 'none';
-    updateGauge(null);
-    return;
+function init(){
+  if(data.vehicles.length === 0){
+    const id = uid();
+    data.vehicles.push({id, name:'My Vehicle'});
+    data.activeVehicleId = id;
+    saveData();
   }
-  emptyEl.style.display = 'none';
-  statsEl.style.display = 'grid';
-  historyEl.style.display = 'block';
+  if(!data.activeVehicleId) data.activeVehicleId = data.vehicles[0].id;
+  renderVehicles();
+  renderAll();
+  document.getElementById('f_date').value = new Date().toISOString().slice(0,10);
+}
 
-  const now = new Date();
-  const thisMonth = entries.filter(e=>{
-    const d = new Date(e.date+'T00:00:00');
-    return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+function renderVehicles(){
+  const row = document.getElementById('vehicleRow');
+  row.innerHTML = '';
+  data.vehicles.forEach(v=>{
+    const chip = document.createElement('div');
+    chip.className = 'vehicle-pill' + (v.id === data.activeVehicleId ? ' active' : '');
+    chip.textContent = v.name;
+    chip.onclick = ()=>{ data.activeVehicleId = v.id; saveData(); renderVehicles(); renderAll(); };
+    row.appendChild(chip);
   });
-  const monthSpend = thisMonth.reduce((s,e)=> s+Number(e.cost), 0);
-  const monthLiters = thisMonth.reduce((s,e)=> s+Number(e.liters), 0);
-  const effs = withEff.filter(e=> e.kml !== null).map(e=> e.kml);
-  const avgKml = effs.length ? effs.reduce((a,b)=>a+b,0)/effs.length : null;
-  const lastKml = effs.length ? effs[effs.length-1] : null;
+}
 
-  document.getElementById('monthSpend').textContent = fmtMoney(monthSpend);
-  document.getElementById('monthLiters').textContent = monthLiters.toFixed(1) + ' L';
-  document.getElementById('avgKml').textContent = avgKml ? avgKml.toFixed(1)+' km/L' : '—';
-  document.getElementById('entryCount').textContent = entries.length + ' fill-ups logged';
+function getActiveEntries(){
+  return data.entries.filter(e=>e.vehicleId === data.activeVehicleId).sort((a,b)=> a.date.localeCompare(b.date));
+}
 
-  updateGauge(lastKml ?? avgKml);
+function entryDistance(e){
+  if(e.distMode === 'dist') return e.distance;
+  const entries = getActiveEntries().filter(x=>x.distMode==='odo');
+  const idx = entries.findIndex(x=>x.id===e.id);
+  if(idx <= 0) return null;
+  const prev = entries[idx-1];
+  if(prev.odo == null || e.odo == null) return null;
+  return e.odo - prev.odo;
+}
 
-  listEl.innerHTML = display.map(e=>`
-    <div class="entry">
-      <div style="flex:1;min-width:0;">
-        <div class="top">
-          <span class="cost">${fmtMoney(e.cost)}</span>
-          <span class="date">${fmtDate(e.date)}</span>
-          ${!e.full ? '<span class="badge">partial</span>' : ''}
+function stationColor(name){
+  let hash = 0;
+  for(let i=0;i<name.length;i++) hash = name.charCodeAt(i) + ((hash<<5)-hash);
+  return CHIP_COLORS[Math.abs(hash) % CHIP_COLORS.length];
+}
+
+function setRange(r){
+  currentRange = r;
+  document.querySelectorAll('.range-tab').forEach(t=>t.classList.toggle('active', parseInt(t.dataset.range)===r));
+  renderAll();
+}
+
+function monthKey(d){ return d.slice(0,7); }
+function monthLabel(key){
+  const [y,m] = key.split('-');
+  return new Date(y, m-1, 1).toLocaleDateString('en-US',{month:'short'});
+}
+
+function renderAll(){
+  const entries = getActiveEntries();
+
+  // group by month
+  const monthMap = {};
+  entries.forEach(e=>{
+    const k = monthKey(e.date);
+    monthMap[k] = (monthMap[k]||0) + e.total;
+  });
+  let months = Object.keys(monthMap).sort();
+  if(currentRange !== 999) months = months.slice(-currentRange);
+  else months = months.slice(-12);
+
+  const bars = document.getElementById('bars');
+  const total = months.reduce((s,k)=> s + (monthMap[k]||0), 0);
+  document.getElementById('heroAmount').textContent = '₱' + total.toLocaleString(undefined,{maximumFractionDigits:0});
+  document.getElementById('heroPeriod').textContent = months.length ? `${monthLabel(months[0])} – ${monthLabel(months[months.length-1])}` : 'No data yet';
+
+  if(months.length === 0){
+    bars.innerHTML = '<div class="empty" style="width:100%;"><div class="big">📈</div>Add fill-ups to see trends</div>';
+  } else {
+    const max = Math.max(...months.map(k=>monthMap[k]), 1);
+    bars.innerHTML = months.map(k=>{
+      const amt = monthMap[k] || 0;
+      const h = Math.max(8, (amt/max)*130);
+      const isPeak = amt === max;
+      return `<div class="bar-col">
+        <div class="bar-amt">₱${amt.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
+        <div class="bar ${isPeak?'peak':''}" style="height:${h}px;"></div>
+        <div class="bar-label">${monthLabel(k)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // overall stats (all-time, not range-limited)
+  let totalLiters=0, totalDist=0, allSpent=0;
+  const stationMap = {};
+  entries.forEach(e=>{
+    totalLiters += e.liters;
+    allSpent += e.total;
+    const dist = entryDistance(e);
+    if(dist && dist>0 && e.liters>0) totalDist += dist;
+    const st = (e.station||'Unspecified').trim() || 'Unspecified';
+    if(!stationMap[st]) stationMap[st] = {total:0, liters:0, count:0};
+    stationMap[st].total += e.total;
+    stationMap[st].liters += e.liters;
+    stationMap[st].count++;
+  });
+  document.getElementById('statKml').textContent = (totalDist>0 && totalLiters>0) ? (totalDist/totalLiters).toFixed(1)+' km/L' : '–';
+  document.getElementById('statAvgPrice').textContent = totalLiters>0 ? '₱'+(allSpent/totalLiters).toFixed(2) : '–';
+
+  const stationList = document.getElementById('stationList');
+  const stations = Object.entries(stationMap).sort((a,b)=> b[1].total - a[1].total);
+  if(stations.length === 0){
+    stationList.innerHTML = '<div class="empty"><div class="big">⛽</div>No fill-ups yet</div>';
+  } else {
+    stationList.innerHTML = stations.map(([name, s])=>`
+      <div class="list-row">
+        <div class="avatar" style="background:${stationColor(name)};">${name.slice(0,2).toUpperCase()}</div>
+        <div class="list-main">
+          <div class="list-title">${escapeHtml(name)}</div>
+          <div class="list-sub">${s.count} fill-up${s.count>1?'s':''} · avg ₱${(s.total/s.liters).toFixed(2)}/L</div>
         </div>
-        <div class="meta mono">
-          <span>${e.liters} L</span>
-          <span>${e.odometer.toLocaleString()} km</span>
-          ${e.kml ? `<span class="kml">${e.kml.toFixed(1)} km/L</span>` : ''}
-        </div>
-        ${e.station ? `<div class="station"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-7.5 8-13a8 8 0 1 0-16 0c0 5.5 8 13 8 13z"/><circle cx="12" cy="9" r="2.5"/></svg><span>${e.station}</span></div>` : ''}
+        <div class="list-amt">₱${s.total.toLocaleString(undefined,{maximumFractionDigits:0})}</div>
       </div>
-      <button class="del-btn" onclick="removeEntry('${e.id}')">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6h12z"/></svg>
-      </button>
-    </div>
-  `).join('');
+    `).join('');
+  }
+
+  renderHistory();
 }
 
-function updateGauge(ref){
-  const min=5, max=25;
-  const labelEl = document.getElementById('gaugeLabel');
-  if(!ref){
-    document.getElementById('gaugeFill').setAttribute('stroke-dasharray','0 132');
-    document.getElementById('needle').style.transform = 'rotate(-90deg)';
-    labelEl.textContent = '—';
+function renderHistory(){
+  const entries = getActiveEntries().slice().reverse();
+  const list = document.getElementById('entryList');
+  if(entries.length === 0){
+    list.innerHTML = '<div class="empty"><div class="big">⛽</div>No fill-ups logged yet.<br>Tap + to add one.</div>';
     return;
   }
-  const clamped = Math.max(min, Math.min(max, ref));
-  const pct = (clamped-min)/(max-min);
-  const angle = -90 + pct*180;
-  document.getElementById('gaugeFill').setAttribute('stroke-dasharray', `${pct*132} 132`);
-  document.getElementById('needle').style.transform = `rotate(${angle}deg)`;
-  labelEl.textContent = ref.toFixed(1)+' km/L';
+  list.innerHTML = entries.map(e=>{
+    const dist = entryDistance(e);
+    const kml = (dist && dist>0 && e.liters>0) ? (dist/e.liters).toFixed(1)+' km/L' : '';
+    const st = e.station || 'Fill-up';
+    return `
+    <div class="list-row" onclick="openEntrySheet('${e.id}')" style="cursor:pointer;">
+      <div class="avatar" style="background:${stationColor(st)};">${st.slice(0,2).toUpperCase()}</div>
+      <div class="list-main">
+        <div class="list-title">${escapeHtml(st)}</div>
+        <div class="list-sub">${formatDate(e.date)} · ${e.liters}L @ ₱${e.price}/L</div>
+      </div>
+      <div class="list-amt">₱${e.total.toLocaleString(undefined,{maximumFractionDigits:0})}${kml?`<span class="kml">${kml}</span>`:''}</div>
+    </div>`;
+  }).join('');
 }
 
-function openForm(){
-  document.getElementById('formError').style.display='none';
-  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
-  document.getElementById('f-odo').value = '';
-  document.getElementById('f-liters').value = '';
-  document.getElementById('f-cost').value = '';
-  document.getElementById('f-station').value = '';
-  document.getElementById('f-full').checked = true;
-  document.getElementById('overlay').style.display = 'flex';
+function formatDate(s){
+  const d = new Date(s+'T00:00:00');
+  return d.toLocaleDateString('en-PH', {month:'short', day:'numeric', year:'numeric'});
 }
-function closeForm(){
-  document.getElementById('overlay').style.display = 'none';
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-function submitForm(ev){
-  ev.preventDefault();
-  const date = document.getElementById('f-date').value;
-  const odo = Number(document.getElementById('f-odo').value);
-  const liters = Number(document.getElementById('f-liters').value);
-  const cost = Number(document.getElementById('f-cost').value);
-  const station = document.getElementById('f-station').value.trim();
-  const full = document.getElementById('f-full').checked;
-  const errEl = document.getElementById('formError');
+function switchTab(tab){
+  document.querySelectorAll('.tabbar .tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
+  document.getElementById('dashboard').style.display = tab==='dashboard' ? 'block':'none';
+  document.getElementById('history').style.display = tab==='history' ? 'block':'none';
+}
 
-  if(!date || !odo || !liters || !cost){
-    errEl.textContent = 'Fill in date, odometer, liters, and cost.';
-    errEl.style.display='block';
-    return;
+function setDistanceMode(mode){
+  distanceMode = mode;
+  document.getElementById('modeOdo').classList.toggle('active', mode==='odo');
+  document.getElementById('modeDist').classList.toggle('active', mode==='dist');
+  document.getElementById('odoFields').style.display = mode==='odo' ? 'block':'none';
+  document.getElementById('distFields').style.display = mode==='dist' ? 'block':'none';
+}
+
+function openEntrySheet(entryId){
+  editingEntryId = entryId || null;
+  document.getElementById('deleteBtn').style.display = entryId ? 'block' : 'none';
+  document.getElementById('entryTitle').textContent = entryId ? 'Edit fuel log' : 'New fuel log';
+
+  if(entryId){
+    const e = data.entries.find(x=>x.id===entryId);
+    document.getElementById('f_date').value = e.date;
+    document.getElementById('f_liters').value = e.liters;
+    document.getElementById('f_price').value = e.price;
+    document.getElementById('f_total').value = e.total;
+    document.getElementById('f_station').value = e.station || '';
+    document.getElementById('f_full').checked = e.fullTank;
+    setDistanceMode(e.distMode);
+    if(e.distMode==='odo') document.getElementById('f_odo').value = e.odo ?? '';
+    else document.getElementById('f_dist').value = e.distance ?? '';
+  } else {
+    document.getElementById('f_date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('f_liters').value = '';
+    document.getElementById('f_price').value = '';
+    document.getElementById('f_total').value = '';
+    document.getElementById('f_station').value = '';
+    document.getElementById('f_odo').value = '';
+    document.getElementById('f_dist').value = '';
+    document.getElementById('f_full').checked = true;
+    setDistanceMode('odo');
   }
-  const sorted = [...entries].sort((a,b)=> a.odometer-b.odometer);
-  const lastOdo = sorted.length ? sorted[sorted.length-1].odometer : 0;
-  if(sorted.length && odo <= lastOdo){
-    errEl.textContent = `Odometer must be greater than your last reading (${lastOdo.toLocaleString()} km).`;
-    errEl.style.display='block';
-    return;
+  document.getElementById('entryOverlay').classList.add('show');
+}
+function closeEntrySheet(){
+  document.getElementById('entryOverlay').classList.remove('show');
+  editingEntryId = null;
+}
+
+function attachAutoCalc(){
+  const liters = document.getElementById('f_liters');
+  const price = document.getElementById('f_price');
+  const total = document.getElementById('f_total');
+  function recalc(){
+    const l = parseFloat(liters.value), p = parseFloat(price.value);
+    if(!isNaN(l) && !isNaN(p)) total.value = (l*p).toFixed(2);
   }
-  entries.push({id:uid(), date, odometer:odo, liters, cost, station, full});
-  saveEntries(entries);
-  closeForm();
-  render();
+  liters.addEventListener('input', recalc);
+  price.addEventListener('input', recalc);
 }
 
-function removeEntry(id){
-  entries = entries.filter(e=> e.id !== id);
-  saveEntries(entries);
-  render();
+function saveEntry(){
+  const date = document.getElementById('f_date').value;
+  const liters = parseFloat(document.getElementById('f_liters').value);
+  const price = parseFloat(document.getElementById('f_price').value);
+  let total = parseFloat(document.getElementById('f_total').value);
+  const station = document.getElementById('f_station').value.trim();
+  const fullTank = document.getElementById('f_full').checked;
+
+  if(!date || isNaN(liters) || liters<=0){ alert('Please enter at least a date and liters.'); return; }
+  if(isNaN(total)) total = (liters * (price||0));
+
+  let odo = null, distance = null;
+  if(distanceMode === 'odo'){
+    odo = parseFloat(document.getElementById('f_odo').value);
+    if(isNaN(odo)) odo = null;
+  } else {
+    distance = parseFloat(document.getElementById('f_dist').value);
+    if(isNaN(distance)) distance = null;
+  }
+
+  const entry = {
+    id: editingEntryId || uid(), vehicleId: data.activeVehicleId,
+    date, liters, price: isNaN(price)?0:price, total, station, fullTank,
+    distMode: distanceMode, odo, distance
+  };
+
+  if(editingEntryId){
+    const idx = data.entries.findIndex(x=>x.id===editingEntryId);
+    data.entries[idx] = entry;
+  } else {
+    data.entries.push(entry);
+  }
+  saveData();
+  closeEntrySheet();
+  renderAll();
 }
 
-render();
+function deleteEntry(){
+  if(!editingEntryId) return;
+  if(!confirm('Delete this fill-up entry?')) return;
+  data.entries = data.entries.filter(x=>x.id!==editingEntryId);
+  saveData();
+  closeEntrySheet();
+  renderAll();
+}
+
+function openVehicleSheet(){
+  document.getElementById('v_name').value = '';
+  document.getElementById('vehicleOverlay').classList.add('show');
+}
+function closeVehicleSheet(){ document.getElementById('vehicleOverlay').classList.remove('show'); }
+function saveVehicle(){
+  const name = document.getElementById('v_name').value.trim();
+  if(!name){ alert('Please enter a vehicle name.'); return; }
+  const id = uid();
+  data.vehicles.push({id, name});
+  data.activeVehicleId = id;
+  saveData();
+  closeVehicleSheet();
+  renderVehicles();
+  renderAll();
+}
+
+attachAutoCalc();
+init();
 </script>
 </body>
 </html>
