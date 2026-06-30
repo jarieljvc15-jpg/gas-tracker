@@ -1,0 +1,9 @@
+{
+  "name": "Fuel Log",
+  "short_name": "Fuel Log",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#15171c",
+  "theme_color": "#15171c",
+  "icons": []
+}
